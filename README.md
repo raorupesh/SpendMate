@@ -1,16 +1,19 @@
-# spendmate
+# SpendMate
 
-A new Flutter project.
+SpendMate Application is designed to simply the tasks of Users(roommates/friends) of shared expenses, while providing
+users insights into their spending habits. With features like segregation of daily chores based on conditional work (On
+Campus Jobs, Internships, Dietary Restriction and many more), categorization of expenses, detailed analytics of
+expenditure, this application offers a modern solution for users who share frequent costs with each other’s.
 
-## Getting Started
+## Features
 
-This project is a starting point for a Flutter application.
+SpendMate Application will consist of the following features:
+• Bill & Task Splitting
+• Categorization Of Expenses
+Spending Insights & Analytics
+• Group & Individual Balances
+• Bill Reminders & Notifications
+• Push Notifications & Alerts
 
-A few resources to get you started if this is your first Flutter project:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
