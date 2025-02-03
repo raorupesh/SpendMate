@@ -51,7 +51,7 @@ class HomePage extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: const [
-                  TransactionCard(title: 'Direct Transfer', amount: 500.00, icon: Icons.shopping_cart),
+                  TransactionCard(title: 'Direct Transfer', amount: 500.00, icon: Icons.account_balance_rounded),
                   TransactionCard(title: 'Groceries', amount: -50.00, icon: Icons.shopping_cart),
                   TransactionCard(title: 'Bus Ticket', amount: -2.50, icon: Icons.directions_bus),
                   TransactionCard(title: 'Dinner', amount: -30.00, icon: Icons.restaurant),
