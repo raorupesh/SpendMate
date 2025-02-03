@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'add_expense_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -11,8 +10,7 @@ class HomePage extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.white, Colors.blue.shade200],
-            // Soft gradient background
+            colors: [Colors.white, Colors.blue.shade200], // Soft gradient background
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -36,46 +34,27 @@ class HomePage extends StatelessWidget {
             // Balance Display Section
             const Text(
               'Current Balance:',
-              style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             const Text(
               '\$2,500.00',
-              style: TextStyle(
-                  fontSize: 36,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87),
+              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             const SizedBox(height: 20),
 
             // Recent Transactions Section
             const Text(
               'Recent Transactions:',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
             ),
             // List of transactions (sample items)
             Expanded(
               child: ListView(
                 children: const [
-                  TransactionCard(
-                      title: 'Direct Transfer',
-                      amount: 500.00,
-                      icon: Icons.shopping_cart),
-                  TransactionCard(
-                      title: 'Groceries',
-                      amount: -50.00,
-                      icon: Icons.shopping_cart),
-                  TransactionCard(
-                      title: 'Bus Ticket',
-                      amount: -2.50,
-                      icon: Icons.directions_bus),
-                  TransactionCard(
-                      title: 'Dinner', amount: -30.00, icon: Icons.restaurant),
+                  TransactionCard(title: 'Direct Transfer', amount: 500.00, icon: Icons.shopping_cart),
+                  TransactionCard(title: 'Groceries', amount: -50.00, icon: Icons.shopping_cart),
+                  TransactionCard(title: 'Bus Ticket', amount: -2.50, icon: Icons.directions_bus),
+                  TransactionCard(title: 'Dinner', amount: -30.00, icon: Icons.restaurant),
                 ],
               ),
             ),
@@ -92,8 +71,7 @@ class HomePage extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const AddExpensePage()),
+                      MaterialPageRoute(builder: (context) => const AddExpensePage()),
                     );
                   },
                 ),
@@ -128,15 +106,13 @@ class TransactionCard extends StatelessWidget {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(icon, color: Colors.deepOrangeAccent),
-        // Changed icon color to deep orange
+        leading: Icon(icon, color: Colors.deepOrangeAccent), // Changed icon color to deep orange
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(amount < 0 ? 'Expense' : 'Income'),
         trailing: Text(
           '\$${amount.toStringAsFixed(2)}',
           style: TextStyle(
-            color: amount < 0 ? Colors.red : Colors.green,
-            // Red for expenses, green for income
+            color: amount < 0 ? Colors.red : Colors.green, // Red for expenses, green for income
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -162,8 +138,7 @@ class ActionButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return ElevatedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon, size: 20, color: Colors.white),
-      // White icons for contrast
+      icon: Icon(icon, size: 20, color: Colors.white), // White icons for contrast
       label: Text(label, style: const TextStyle(color: Colors.white)),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.teal.shade600, // Teal button color
