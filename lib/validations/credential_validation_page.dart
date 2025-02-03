@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
 
-bool isSignUpEnabled = false;
-
 void validateFields(
-    TextEditingController fullNameController,
-    TextEditingController emailController,
-    TextEditingController passwordController,
-    Function updateButtonState, // Use this function to call setState from the widget
-    ) {
-  final fullName = fullNameController.text;
-  final email = emailController.text;
-  final password = passwordController.text;
+  TextEditingController emailController,
+  TextEditingController passwordController, {
+  required Function updateButtonState,
+  required Function updateErrorMessages,
+  required bool isSignUp,
+}) {
+  String emailError = '';
+  String passwordError = '';
 
-  // Validate fields: full name (not empty), email (valid format), and password (<=20 characters)
-  final fullNameValid = fullName.isNotEmpty;
-  final emailValid = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$').hasMatch(email);
-  final passwordValid = password.isNotEmpty && password.length <= 20;
+  if (emailController.text.isEmpty) {
+    emailError = 'Email cannot be empty';
+  } else if (!RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$')
+      .hasMatch(emailController.text)) {
+    emailError = 'Invalid email address';
+  }
 
-  // Call the updateButtonState function to trigger setState in the calling widget
+  if (passwordController.text.isEmpty) {
+    passwordError = 'Password cannot be empty';
+  } else if (passwordController.text.length < 6) {
+    passwordError = 'Password must be at least 6 characters';
+  }
+
+  // Update the error messages (only email and password for login)
+  updateErrorMessages(emailError, passwordError);
+
+  // Check if the form is valid
   updateButtonState(() {
-    isSignUpEnabled = fullNameValid && emailValid && passwordValid;
+    return emailError.isEmpty && passwordError.isEmpty;
   });
 }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import '../validations/credential_validation_page.dart'; // Import the validation logic
+import 'package:spendmate/validations/credential_validation_page.dart'; // Import the shared validation logic
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -10,15 +9,31 @@ class SignUpPage extends StatefulWidget {
 }
 
 class _SignUpPageState extends State<SignUpPage> {
-  // Controllers for each field
   final TextEditingController fullNameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
 
+  bool isSignUpEnabled = false;
+  String emailErrorMessage = '';
+  String passwordErrorMessage = '';
+
+  // Flags to check if the fields are focused
+  bool emailFocused = false;
+  bool passwordFocused = false;
+
   // This method will be called to update the button state
-  void updateButtonState(Function setStateCallback) {
+  void updateButtonState(Function callback) {
     setState(() {
-      setStateCallback();
+      isSignUpEnabled =
+          callback(); // We call the callback from validateFields to set the state
+    });
+  }
+
+  // Function to update the error messages
+  void updateErrorMessages(String emailError, String passwordError) {
+    setState(() {
+      emailErrorMessage = emailError;
+      passwordErrorMessage = passwordError;
     });
   }
 
@@ -43,7 +58,7 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
               ),
-              const SizedBox(height: 50), // Add some space before the fields
+              const SizedBox(height: 50),
 
               // Full Name Input Field
               const Text(
@@ -63,13 +78,6 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 keyboardType: TextInputType.name,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(100),
-                ],
-                onChanged: (_) {
-                  // Call validation function when field value changes
-                  validateFields(fullNameController, emailController, passwordController, updateButtonState);
-                },
               ),
               const SizedBox(height: 16),
 
@@ -91,14 +99,32 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 keyboardType: TextInputType.emailAddress,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(100),
-                ],
                 onChanged: (_) {
-                  // Call validation function when field value changes
-                  validateFields(fullNameController, emailController, passwordController, updateButtonState);
+                  validateFields(
+                    emailController,
+                    passwordController,
+                    updateButtonState: updateButtonState,
+                    updateErrorMessages: updateErrorMessages,
+                    isSignUp: true, // It's sign-up validation
+                  );
+                },
+                onTap: () {
+                  setState(() {
+                    emailFocused = true; // Mark email field as focused
+                  });
                 },
               ),
+              if (emailFocused && emailErrorMessage.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      emailErrorMessage,
+                      style: TextStyle(color: Colors.red, fontSize: 14),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 16),
 
               // Password Input Field
@@ -119,68 +145,51 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 obscureText: true,
-                keyboardType: TextInputType.visiblePassword,
-                inputFormatters: [
-                  LengthLimitingTextInputFormatter(20),
-                ],
                 onChanged: (_) {
-                  // Call validation function when field value changes
-                  validateFields(fullNameController, emailController, passwordController, updateButtonState);
+                  validateFields(
+                    emailController,
+                    passwordController,
+                    updateButtonState: updateButtonState,
+                    updateErrorMessages: updateErrorMessages,
+                    isSignUp: true, // It's sign-up validation
+                  );
+                },
+                onTap: () {
+                  setState(() {
+                    passwordFocused = true; // Mark password field as focused
+                  });
                 },
               ),
+              if (passwordFocused && passwordErrorMessage.isNotEmpty)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 8.0),
+                    child: Text(
+                      passwordErrorMessage,
+                      style: TextStyle(color: Colors.red, fontSize: 14),
+                    ),
+                  ),
+                ),
               const SizedBox(height: 20),
 
               // Sign Up Button (Only enabled when valid)
               ElevatedButton(
                 onPressed: isSignUpEnabled
                     ? () {
-                  // After successful sign up, redirect to Login Page
-                  Navigator.pushReplacementNamed(context, '/login');
-                }
+                        // After successful sign-up, redirect to Login Page
+                        Navigator.pushReplacementNamed(context, '/login');
+                      }
                     : null, // Disable button if fields are not valid
                 child: const Text('Sign Up'),
-
                 style: ElevatedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(30)),
                   backgroundColor: Colors.teal.shade500,
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-
-              // Terms and Conditions Disclaimer
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Text(
-                    'By signing up, you accept our ',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  GestureDetector(
-                    onTap: () {
-                      // Open Terms and Conditions (You can implement this feature if needed)
-                      print('Terms and Conditions tapped');
-                    },
-                    child: const Text(
-                      'Terms and Conditions',
-                      style: TextStyle(fontSize: 14, color: Colors.teal, fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Link to Login Page
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    // If user clicks 'Already have an account?', navigate to login
-                    Navigator.pushReplacementNamed(context, '/login');
-                  },
-                  child: const Text('Already have an account? Login'),
+                  textStyle: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ],
