@@ -106,14 +106,17 @@ class _AddExpensePageState extends State<AddExpensePage> {
           },
         ),
       ),
-      backgroundColor: Colors.teal.shade50, // Light background color for contrast
-      body: Center(  // Center the whole body content vertically and horizontally
+      backgroundColor: Colors.teal.shade50,
+      // Light background color for contrast
+      body: Center(
+        // Center the whole body content vertically and horizontally
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20.0),
           child: Card(
             elevation: 8,
             color: Colors.white,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -170,7 +173,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     keyboardType: TextInputType.number,
                     inputFormatters: [
                       // Allow only digits and a decimal point
-                      FilteringTextInputFormatter.allow(RegExp(r'^\d+(\.\d{0,2})?$'))
+                      FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d+(\.\d{0,2})?$'))
                     ],
                     onChanged: (value) {
                       // Validate fields on each change
@@ -186,16 +190,21 @@ class _AddExpensePageState extends State<AddExpensePage> {
                     child: ElevatedButton(
                       onPressed: isSaveEnabled
                           ? () {
-                        // Save Expense and navigate to home page
-                        Navigator.pop(context); // Go back to HomePage after saving
-                      }
+                              // Save Expense and navigate to home page
+                              Navigator.pop(
+                                  context); // Go back to HomePage after saving
+                            }
                           : null, // Disable button if fields are not valid
                       child: const Text('Save Expense'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.teal.shade300, // Gradient colors for modern look
-                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                        textStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        backgroundColor: Colors.teal.shade300,
+                        // Gradient colors for modern look
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 40, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30)),
+                        textStyle: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ),
                   ),

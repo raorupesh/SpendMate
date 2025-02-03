@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spendmate/validations/credential_validation_page.dart'; // Import the shared validation logic
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -10,29 +11,43 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final TextEditingController fullNameController = TextEditingController();
 
   bool isLoginEnabled = false;
+  String emailErrorMessage = '';
+  String passwordErrorMessage = '';
+  bool emailFocused = false; // To track if the email field is interacted with
+  bool passwordFocused =
+      false; // To track if the password field is interacted with
 
-  // Method to validate if both fields are filled
-  void validateFields() {
+  // This function is used to trigger setState and update the login button state
+  void updateButtonState(Function callback) {
     setState(() {
-      isLoginEnabled = emailController.text.isNotEmpty && passwordController.text.isNotEmpty;
+      isLoginEnabled =
+          callback(); // We call the callback from validateFields to set the state
+    });
+  }
+
+  // Function to update the error messages
+  void updateErrorMessages(String emailError, String passwordError) {
+    setState(() {
+      emailErrorMessage = emailError;
+      passwordErrorMessage = passwordError;
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(  // This centers the entire body content vertically and horizontally
+      body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: SingleChildScrollView(
             child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,  // Center the column content vertically
-              crossAxisAlignment: CrossAxisAlignment.center, // Center the column content horizontally
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 const SizedBox(height: 30),
-                // Logo or App Name
                 Center(
                   child: Text(
                     'SpendMate',
@@ -60,8 +75,32 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   style: TextStyle(color: Colors.teal.shade900),
-                  onChanged: (_) => validateFields(),  // Validate when the text changes
+                  onChanged: (_) {
+                    validateFields(
+                      emailController,
+                      passwordController,
+                      updateButtonState: updateButtonState,
+                      updateErrorMessages: updateErrorMessages,
+                      isSignUp: false, // It's login, not sign-up
+                    );
+                  },
+                  onTap: () {
+                    setState(() {
+                      emailFocused = true; // Mark email field as focused
+                    });
+                  },
                 ),
+                if (emailFocused && emailErrorMessage.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        emailErrorMessage,
+                        style: TextStyle(color: Colors.red, fontSize: 14),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 20),
 
                 // Password Input Field
@@ -79,24 +118,52 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   obscureText: true,
                   style: TextStyle(color: Colors.teal.shade900),
-                  onChanged: (_) => validateFields(),  // Validate when the text changes
+                  onChanged: (_) {
+                    validateFields(
+                      emailController,
+                      passwordController,
+                      updateButtonState: updateButtonState,
+                      updateErrorMessages: updateErrorMessages,
+                      isSignUp: false, // It's login, not sign-up
+                    );
+                  },
+                  onTap: () {
+                    setState(() {
+                      passwordFocused = true; // Mark password field as focused
+                    });
+                  },
                 ),
+                if (passwordFocused && passwordErrorMessage.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        passwordErrorMessage,
+                        style: TextStyle(color: Colors.red, fontSize: 14),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 30),
 
                 // Login Button
                 ElevatedButton(
                   onPressed: isLoginEnabled
                       ? () {
-                    // After login, navigate to the home page and remove the login page from the stack
-                    Navigator.pushReplacementNamed(context, '/'); // Home page
-                  }
-                      : null, // Disable the button if fields are empty
+                          Navigator.pushReplacementNamed(
+                              context, '/'); // Navigate to the home page
+                        }
+                      : null,
+                  // Disable the button if fields are empty or invalid
                   child: const Text('Login'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal.shade300,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    textStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 15),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30)),
+                    textStyle:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
                 const SizedBox(height: 20),
@@ -104,7 +171,6 @@ class _LoginPageState extends State<LoginPage> {
                 // Sign-Up Button
                 TextButton(
                   onPressed: () {
-                    // When clicking "Don't have an account?", navigate to the sign-up page and remove the login page from the stack
                     Navigator.pushReplacementNamed(context, '/signup');
                   },
                   child: const Text(
