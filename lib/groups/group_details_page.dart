@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/screens/transaction_details_page.dart';
-import 'package:spendmate/screens/transaction_page.dart';
-import 'package:spendmate/screens/group_settings_page.dart';
+import 'package:spendmate/transactions//transaction_details_page.dart';
+import 'package:spendmate/transactions//transaction_page.dart';
+import 'package:spendmate/groups/group_settings_page.dart';
 
 class GroupDetailPage extends StatelessWidget {
   final String groupName;

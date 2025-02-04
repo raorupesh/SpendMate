@@ -1,9 +1,8 @@
-// AddTransactionPage.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'friends_page.dart';
 import 'split_method_page.dart';
+import 'package:spendmate/groups/friends_page.dart';
 
 class AddTransactionPage extends StatefulWidget {
   final String groupName;
