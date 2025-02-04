@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:spendmate/screens/groups_page.dart';
+import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/screens/login_page.dart';
 import 'package:spendmate/screens/signup_page.dart';
-import '../screens/home_page.dart';
-import '../screens/groups_page.dart';
 
 void main() {
   runApp(const SpendMateApp());

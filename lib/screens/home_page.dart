@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // For SystemNavigator to close app
 import 'add_expense_page.dart';
 
 class HomePage extends StatelessWidget {
@@ -6,79 +7,86 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.white, Colors.blue.shade200], // Soft gradient background
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+    return WillPopScope(
+      onWillPop: () async {
+        // Close the app when back button is pressed
+        SystemNavigator.pop(); // This will close the app
+        return Future.value(false); // Prevent back navigation
+      },
+      child: Scaffold(
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.white, Colors.blue.shade200], // Soft gradient background
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-        ),
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Add space from the top and show "Your Section" title
-            const SizedBox(height: 40), // Adds space from the top
-            const Text(
-              'Personal Section', // The section name
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Add space from the top and show "Your Section" title
+              const SizedBox(height: 40), // Adds space from the top
+              const Text(
+                'Personal Section', // The section name
+                style: TextStyle(
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
-            // Balance Display Section
-            const Text(
-              'Current Balance:',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            const Text(
-              '\$2,500.00',
-              style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            const SizedBox(height: 20),
+              // Balance Display Section
+              const Text(
+                'Current Balance:',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              const Text(
+                '\$2,500.00',
+                style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              const SizedBox(height: 20),
 
-            // Recent Transactions Section
-            const Text(
-              'Recent Transactions:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-            ),
-            // List of transactions (sample items)
-            Expanded(
-              child: ListView(
-                children: const [
-                  TransactionCard(title: 'Direct Transfer', amount: 500.00, icon: Icons.shopping_cart),
-                  TransactionCard(title: 'Groceries', amount: -50.00, icon: Icons.shopping_cart),
-                  TransactionCard(title: 'Bus Ticket', amount: -2.50, icon: Icons.directions_bus),
-                  TransactionCard(title: 'Dinner', amount: -30.00, icon: Icons.restaurant),
+              // Recent Transactions Section
+              const Text(
+                'Recent Transactions:',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
+              ),
+              // List of transactions (sample items)
+              Expanded(
+                child: ListView(
+                  children: const [
+                    TransactionCard(title: 'Direct Transfer', amount: 500.00, icon: Icons.shopping_cart),
+                    TransactionCard(title: 'Groceries', amount: -50.00, icon: Icons.shopping_cart),
+                    TransactionCard(title: 'Bus Ticket', amount: -2.50, icon: Icons.directions_bus),
+                    TransactionCard(title: 'Dinner', amount: -30.00, icon: Icons.restaurant),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Action Buttons for Add Expense and View Reports
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ActionButton(
+                    label: 'Add Expense',
+                    icon: Icons.add,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const AddExpensePage()),
+                      );
+                    },
+                  ),
+                  const SizedBox(width: 16),
                 ],
               ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Action Buttons for Add Expense and View Reports
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ActionButton(
-                  label: 'Add Expense',
-                  icon: Icons.add,
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AddExpensePage()),
-                    );
-                  },
-                ),
-                const SizedBox(width: 16),
-              ],
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

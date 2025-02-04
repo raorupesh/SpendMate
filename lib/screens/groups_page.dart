@@ -60,10 +60,7 @@ class _GroupsPageState extends State<GroupsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const HomePage()),
-            );
+            Navigator.pushReplacementNamed(context, '/');// Pop GroupsPage to navigate back to BottomNavBar
           },
         ),
       ),
