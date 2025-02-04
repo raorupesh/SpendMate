@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_page.dart';
+import 'package:provider/provider.dart';
+import 'package:spendmate/providers/transaction_provider.dart';
+import 'package:spendmate/screens/group_details_page.dart';
 
 class GroupsPage extends StatefulWidget {
   const GroupsPage({super.key});
@@ -9,14 +11,6 @@ class GroupsPage extends StatefulWidget {
 }
 
 class _GroupsPageState extends State<GroupsPage> {
-  // Temporary sample groups
-  List<Map<String, dynamic>> groups = [
-    {"name": "Friends Trip", "balance": -50.00},
-    {"name": "Family Expenses", "balance": 120.00},
-    {"name": "Roommates", "balance": -30.50},
-  ];
-
-  // Method to show the create group dialog
   void _showCreateGroupDialog() {
     TextEditingController groupNameController = TextEditingController();
 
@@ -37,9 +31,9 @@ class _GroupsPageState extends State<GroupsPage> {
             ElevatedButton(
               onPressed: () {
                 if (groupNameController.text.isNotEmpty) {
-                  setState(() {
-                    groups.add({"name": groupNameController.text, "balance": 0.0});
-                  });
+                  Provider.of<GroupProvider>(context, listen: false).addGroup(
+                    Group(name: groupNameController.text),
+                  );
                   Navigator.pop(context);
                 }
               },
@@ -60,31 +54,43 @@ class _GroupsPageState extends State<GroupsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pushReplacementNamed(context, '/');// Pop GroupsPage to navigate back to BottomNavBar
+            Navigator.pushReplacementNamed(context, '/');
           },
         ),
       ),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(10),
-        itemCount: groups.length,
-        itemBuilder: (context, index) {
-          final group = groups[index];
-          return Card(
-            elevation: 4,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: ListTile(
-              title: Text(group['name'], style: const TextStyle(fontWeight: FontWeight.bold)),
-              subtitle: Text(
-                group['balance'] < 0
-                    ? "You owe \$${group['balance'].abs().toStringAsFixed(2)}"
-                    : "You are owed \$${group['balance'].toStringAsFixed(2)}",
-                style: TextStyle(color: group['balance'] < 0 ? Colors.red : Colors.green),
-              ),
-              trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-              onTap: () {
-                // Navigate to group details (to be implemented later)
-              },
-            ),
+      body: Consumer<GroupProvider>(
+        builder: (context, groupProvider, child) {
+          return ListView.builder(
+            padding: const EdgeInsets.all(10),
+            itemCount: groupProvider.groups.length,
+            itemBuilder: (context, index) {
+              final group = groupProvider.groups[index];
+              return Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  title: Text(group.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: group.transactions.isEmpty
+                      ? const Text("No transactions yet")
+                      : Text(
+                    group.balance < 0
+                        ? "You owe \$${group.balance.abs().toStringAsFixed(2)}"
+                        : "You are owed \$${group.balance.toStringAsFixed(2)}",
+                    style: TextStyle(color: group.balance < 0 ? Colors.red : Colors.green),
+                  ),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                  onTap: () {
+                    // Navigate to group details
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => GroupDetailPage(groupName: group.name),
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           );
         },
       ),

@@ -15,25 +15,57 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController phoneController = TextEditingController();
 
   bool isSignUpEnabled = false;
+  String fullNameErrorMessage = '';
   String emailErrorMessage = '';
   String passwordErrorMessage = '';
-  String phoneErrorMessage = '';  // Error message for phone number
+  String phoneErrorMessage = '';
 
-  // Flags to check if the fields are focused
-  bool emailFocused = false;
-  bool passwordFocused = false;
-  bool phoneFocused = false;  // Flag for phone number field
-
-  // Method to handle back navigation
-  Future<bool> _onBackPressed() async {
-    Navigator.pushReplacementNamed(context, '/login');
-    return Future.value(false);  // Prevent default back navigation
+  // Function to validate full name
+  bool validateFullName() {
+    if (fullNameController.text.isEmpty) {
+      fullNameErrorMessage = 'Full name is required.';
+      return false;
+    } else {
+      fullNameErrorMessage = ''; // No error
+      return true;
+    }
   }
 
-  // Function to validate phone number
+  // Function to validate email
+  bool validateEmail() {
+    if (emailController.text.isEmpty) {
+      emailErrorMessage = 'Email is required.';
+      return false;
+    } else if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(emailController.text)) {
+      emailErrorMessage = 'Please enter a valid email.';
+      return false;
+    } else {
+      emailErrorMessage = '';  // No error
+      return true;
+    }
+  }
+
+  // Function to validate password
+  bool validatePassword() {
+    if (passwordController.text.isEmpty) {
+      passwordErrorMessage = 'Password is required.';
+      return false;
+    } else if (passwordController.text.length < 6) {
+      passwordErrorMessage = 'Password must be at least 6 characters.';
+      return false;
+    } else {
+      passwordErrorMessage = '';  // No error
+      return true;
+    }
+  }
+
+  // Function to validate phone number (only numbers)
   bool validatePhoneNumber() {
     if (phoneController.text.isEmpty) {
-      phoneErrorMessage = "Phone number is required.";
+      phoneErrorMessage = 'Phone number is required.';
+      return false;
+    } else if (!RegExp(r"^\d+$").hasMatch(phoneController.text)) {  // Ensures only numbers are entered
+      phoneErrorMessage = 'Phone number must contain only numbers.';
       return false;
     } else {
       phoneErrorMessage = '';  // No error
@@ -42,50 +74,25 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   // Method to handle field validation
-  bool validateFields() {
-    String emailError = '';
-    String passwordError = '';
-    String phoneError = '';
-
-    // Email validation: Ensure email is not empty and follows a basic pattern
-    bool isEmailValid = emailController.text.isNotEmpty && RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(emailController.text);
-    if (!isEmailValid) {
-      emailError = "Please enter a valid email.";
-    }
-
-    // Password validation: Ensure password is at least 6 characters
-    bool isPasswordValid = passwordController.text.length >= 6;
-    if (!isPasswordValid) {
-      passwordError = "Password must be at least 6 characters.";
-    }
-
-    // Phone number validation: Ensure phone number is not empty
+  void validateFields() {
+    bool isFullNameValid = validateFullName();
+    bool isEmailValid = validateEmail();
+    bool isPasswordValid = validatePassword();
     bool isPhoneValid = validatePhoneNumber();
-    if (!isPhoneValid) {
-      phoneError = phoneErrorMessage;
-    }
-
-    // Update error messages
-    setState(() {
-      emailErrorMessage = emailError;
-      passwordErrorMessage = passwordError;
-      phoneErrorMessage = phoneError;
-    });
 
     // Enable sign-up button if all fields are valid
     setState(() {
-      isSignUpEnabled = isEmailValid && isPasswordValid && isPhoneValid;
+      isSignUpEnabled = isFullNameValid && isEmailValid && isPasswordValid && isPhoneValid;
     });
-
-    // Return true if all fields are valid
-    return isEmailValid && isPasswordValid && isPhoneValid;
   }
-
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: _onBackPressed,  // Intercept back button press
+      onWillPop: () async {
+        Navigator.pushReplacementNamed(context, '/login');
+        return Future.value(false);
+      },
       child: Scaffold(
         body: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -94,7 +101,6 @@ class _SignUpPageState extends State<SignUpPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 const SizedBox(height: 50),
-                // Title: Sign Up
                 Center(
                   child: Text(
                     'Sign Up',
@@ -125,7 +131,23 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   keyboardType: TextInputType.name,
+                  onChanged: (_) {
+                    setState(() {
+                      validateFields(); // Validate fields
+                    });
+                  },
                 ),
+                if (fullNameErrorMessage.isNotEmpty)
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 8.0),
+                      child: Text(
+                        fullNameErrorMessage,
+                        style: TextStyle(color: Colors.red, fontSize: 14),
+                      ),
+                    ),
+                  ),
                 const SizedBox(height: 16),
 
                 // Phone Number Input Field with Country Code
@@ -145,9 +167,12 @@ class _SignUpPageState extends State<SignUpPage> {
                       borderSide: BorderSide.none,
                     ),
                   ),
-                  initialCountryCode: 'US',  // You can change the default country code
+                  initialCountryCode: 'US',
+                  keyboardType: TextInputType.phone,  // Ensures phone number only accepts numbers
                   onChanged: (phone) {
-                    validateFields(); // Validate fields whenever phone number is changed
+                    setState(() {
+                      validateFields();  // Validate fields
+                    });
                   },
                 ),
                 if (phoneErrorMessage.isNotEmpty)
@@ -182,7 +207,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   keyboardType: TextInputType.emailAddress,
                   onChanged: (_) {
-                    validateFields(); // Validate fields whenever email is changed
+                    setState(() {
+                      validateFields(); // Validate fields
+                    });
                   },
                 ),
                 if (emailErrorMessage.isNotEmpty)
@@ -217,7 +244,9 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                   obscureText: true,
                   onChanged: (_) {
-                    validateFields(); // Validate fields whenever password is changed
+                    setState(() {
+                      validateFields(); // Validate fields
+                    });
                   },
                 ),
                 if (passwordErrorMessage.isNotEmpty)
@@ -237,10 +266,9 @@ class _SignUpPageState extends State<SignUpPage> {
                 ElevatedButton(
                   onPressed: isSignUpEnabled
                       ? () {
-                    // After successful sign-up, redirect to Login Page
                     Navigator.pushReplacementNamed(context, '/login');
                   }
-                      : null, // Disable button if fields are not valid
+                      : null,  // Disable button if fields are not valid
                   child: const Text('Sign Up'),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),

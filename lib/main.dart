@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart'; // Import provider package
+import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/screens/groups_page.dart';
 import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/screens/login_page.dart';
@@ -13,19 +15,22 @@ class SpendMateApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SpendMate',
-      theme: ThemeData(
-        primarySwatch: Colors.teal,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return ChangeNotifierProvider(
+      create: (context) => GroupProvider(), // Provide the GroupProvider to the app
+      child: MaterialApp(
+        title: 'SpendMate',
+        theme: ThemeData(
+          primarySwatch: Colors.teal,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        initialRoute: '/login',
+        routes: {
+          '/': (context) => const BottomNavBar(),
+          '/login': (context) => const LoginPage(),
+          '/signup': (context) => const SignUpPage(),
+        },
+        debugShowCheckedModeBanner: false,
       ),
-      initialRoute: '/login',
-      routes: {
-        '/': (context) => const BottomNavBar(),
-        '/login': (context) => const LoginPage(),
-        '/signup': (context) => const SignUpPage(),
-      },
-      debugShowCheckedModeBanner: false,
     );
   }
 }
