@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/screens/group_details_page.dart';
+import 'package:spendmate/screens/add_group_members_page.dart'; // Import the new file
 
 class GroupsPage extends StatefulWidget {
   const GroupsPage({super.key});
@@ -13,15 +14,41 @@ class GroupsPage extends StatefulWidget {
 class _GroupsPageState extends State<GroupsPage> {
   void _showCreateGroupDialog() {
     TextEditingController groupNameController = TextEditingController();
+    List<String> selectedFriends = [];
 
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Create New Group"),
-          content: TextField(
-            controller: groupNameController,
-            decoration: const InputDecoration(hintText: "Enter group name"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: groupNameController,
+                decoration: const InputDecoration(hintText: "Enter group name"),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final friends = await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const AddGroupMembersPage()),
+                  );
+                  if (friends != null) {
+                    setState(() {
+                      selectedFriends = List<String>.from(friends);
+                    });
+                  }
+                },
+                icon: const Icon(Icons.person_add),
+                label: const Text("Add Members"),
+              ),
+              const SizedBox(height: 10),
+              Wrap(
+                children: selectedFriends.map((friend) => Chip(label: Text(friend))).toList(),
+              ),
+            ],
           ),
           actions: <Widget>[
             TextButton(
@@ -32,7 +59,17 @@ class _GroupsPageState extends State<GroupsPage> {
               onPressed: () {
                 if (groupNameController.text.isNotEmpty) {
                   Provider.of<GroupProvider>(context, listen: false).addGroup(
-                    Group(name: groupNameController.text),
+                    Group(
+                      name: groupNameController.text,
+                      transactions: [
+                        Transaction(
+                          description: "Initial",
+                          amount: 0.0,
+                          date: DateTime.now(),
+                          participants: selectedFriends,
+                        ),
+                      ],
+                    ),
                   );
                   Navigator.pop(context);
                 }
@@ -51,12 +88,6 @@ class _GroupsPageState extends State<GroupsPage> {
       appBar: AppBar(
         title: const Text("Groups"),
         backgroundColor: Colors.teal,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pushReplacementNamed(context, '/');
-          },
-        ),
       ),
       body: Consumer<GroupProvider>(
         builder: (context, groupProvider, child) {
@@ -80,7 +111,6 @@ class _GroupsPageState extends State<GroupsPage> {
                   ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
-                    // Navigate to group details
                     Navigator.push(
                       context,
                       MaterialPageRoute(
