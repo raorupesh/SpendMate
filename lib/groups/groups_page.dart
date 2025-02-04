@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/screens/group_details_page.dart';
-import 'package:spendmate/screens/add_group_members_page.dart'; // Import the new file
+import 'package:spendmate/groups/group_details_page.dart';
+import 'package:spendmate/groups/add_group_members_page.dart'; // Import the new file
 
 class GroupsPage extends StatefulWidget {
   const GroupsPage({super.key});

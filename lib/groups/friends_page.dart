@@ -1,4 +1,3 @@
-// FriendsPage.dart
 import 'package:flutter/material.dart';
 
 class FriendsPage extends StatefulWidget {
