@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/screens/transaction_details_page.dart';
 import 'package:spendmate/screens/transaction_page.dart';
-
+import 'package:spendmate/screens/group_settings_page.dart';
 
 class GroupDetailPage extends StatelessWidget {
   final String groupName;
@@ -20,9 +20,15 @@ class GroupDetailPage extends StatelessWidget {
         backgroundColor: Colors.teal,
         actions: [
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.settings),
             onPressed: () {
-              // Navigate to Add Friends page (not yet implemented)
+              // Navigate to Group Settings Page
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => GroupSettingsPage(groupName: groupName),
+                ),
+              );
             },
           ),
         ],
