@@ -43,6 +43,11 @@ class GroupProvider with ChangeNotifier {
     _groups.add(group);
     notifyListeners();
   }
+  void settleUpGroup(String groupName) {
+    Group group = _groups.firstWhere((group) => group.name == groupName);
+    group.transactions.clear(); // Clear all transactions
+    notifyListeners(); // Update UI
+  }
 
   // Add a transaction to a group
   void addTransaction(String groupName, Transaction transaction) {
