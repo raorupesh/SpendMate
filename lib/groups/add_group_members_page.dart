@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class AddGroupMembersPage extends StatefulWidget {
-  const AddGroupMembersPage({super.key});
+  final List<String> preselectedFriends; // Store previously selected friends
+
+  const AddGroupMembersPage({super.key, required this.preselectedFriends});
 
   @override
   _AddGroupMembersPageState createState() => _AddGroupMembersPageState();
@@ -9,7 +11,13 @@ class AddGroupMembersPage extends StatefulWidget {
 
 class _AddGroupMembersPageState extends State<AddGroupMembersPage> {
   final List<String> friends = ["bhAAi", "Moin Beta", "Nandan", "Karthik", "Vamshi"];
-  final Set<String> selectedFriends = {};
+  late Set<String> selectedFriends;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedFriends = widget.preselectedFriends.toSet(); // Load previous selection
+  }
 
   @override
   Widget build(BuildContext context) {
