@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/transactions/transaction_page.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
+import 'package:spendmate/transactions/transaction_details_page.dart'; // ✅ Import Transaction Details Page
+
 
 class GroupDetailPage extends StatelessWidget {
   final String groupName;
@@ -43,6 +45,17 @@ class GroupDetailPage extends StatelessWidget {
               title: Text(transaction.description),
               subtitle: Text("Amount: \$${transaction.amount.toStringAsFixed(2)}"),
               trailing: Text(transaction.date.toLocal().toString().split(' ')[0]),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => TransactionDetailsPage(
+                      groupName: group.name,
+                      transactionIndex: index, // ✅ Pass transaction index correctly
+                    ),
+                  ),
+                );
+              },
             ),
           );
         },

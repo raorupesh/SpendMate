@@ -25,7 +25,7 @@ class Group {
     List<Transaction>? transactions,
   }) : transactions = transactions ?? [];
 
-  // ✅ Calculate balance based on transactions
+  // ✅ Add balance calculation to fix the issue
   double get balance {
     double total = 0.0;
     for (var transaction in transactions) {
@@ -34,11 +34,6 @@ class Group {
     return total;
   }
 }
-
-
-
-
-
 
 class GroupProvider with ChangeNotifier {
   List<Group> _groups = [];
