@@ -72,9 +72,8 @@ class GroupSettingsPage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                // Logic to leave the group (not implemented yet)
-                Navigator.pop(context);
-                Navigator.pop(context); // Go back to the previous page
+                Provider.of<GroupProvider>(context, listen: false).leaveGroup(groupName);
+                Navigator.popUntil(context, (route) => route.isFirst); // Navigate back to Groups list
               },
               child: const Text("Leave", style: TextStyle(color: Colors.red)),
             ),
@@ -83,4 +82,5 @@ class GroupSettingsPage extends StatelessWidget {
       },
     );
   }
+
 }
