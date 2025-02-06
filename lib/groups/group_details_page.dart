@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/transactions//transaction_details_page.dart';
-import 'package:spendmate/transactions//transaction_page.dart';
+import 'package:spendmate/transactions/transaction_page.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
 
 class GroupDetailPage extends StatelessWidget {
@@ -33,7 +32,9 @@ class GroupDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      body: ListView.builder(
+      body: group.transactions.isEmpty
+          ? const Center(child: Text("No transactions yet."))
+          : ListView.builder(
         itemCount: group.transactions.length,
         itemBuilder: (context, index) {
           final transaction = group.transactions[index];
@@ -42,25 +43,15 @@ class GroupDetailPage extends StatelessWidget {
               title: Text(transaction.description),
               subtitle: Text("Amount: \$${transaction.amount.toStringAsFixed(2)}"),
               trailing: Text(transaction.date.toLocal().toString().split(' ')[0]),
-              onTap: () {
-                // Navigate to Transaction Details Page
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TransactionDetailsPage(
-                      groupName: group.name,
-                      transactionIndex: index,
-                    ),
-                  ),
-                );
-              },
             ),
           );
         },
       ),
+
+      // ✅ Floating Action Button to Add Transactions
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.teal,
         onPressed: () {
-          // Navigate to Add Transaction page
           Navigator.push(
             context,
             MaterialPageRoute(
