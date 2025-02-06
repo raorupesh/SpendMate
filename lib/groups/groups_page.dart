@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/groups/group_details_page.dart';
-import 'package:spendmate/groups/add_group_members_page.dart'; // Import the new file
+import 'package:spendmate/groups/group_details_page.dart'; // ✅ Fix: Import this file
+import 'package:spendmate/groups/add_group_members_page.dart';
 
 class GroupsPage extends StatefulWidget {
   const GroupsPage({super.key});
@@ -19,64 +19,64 @@ class _GroupsPageState extends State<GroupsPage> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text("Create New Group"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: groupNameController,
-                decoration: const InputDecoration(hintText: "Enter group name"),
-              ),
-              const SizedBox(height: 10),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final friends = await Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AddGroupMembersPage()),
-                  );
-                  if (friends != null) {
-                    setState(() {
-                      selectedFriends = List<String>.from(friends);
-                    });
-                  }
-                },
-                icon: const Icon(Icons.person_add),
-                label: const Text("Add Members"),
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                children: selectedFriends.map((friend) => Chip(label: Text(friend))).toList(),
-              ),
-            ],
-          ),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (groupNameController.text.isNotEmpty) {
-                  Provider.of<GroupProvider>(context, listen: false).addGroup(
-                    Group(
-                      name: groupNameController.text,
-                      transactions: [
-                        Transaction(
-                          description: "Initial",
-                          amount: 0.0,
-                          date: DateTime.now(),
-                          participants: selectedFriends,
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Create New Group"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: groupNameController,
+                    decoration: const InputDecoration(hintText: "Enter group name"),
+                    onChanged: (_) => setState(() {}),
+                  ),
+                  const SizedBox(height: 10),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final friends = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AddGroupMembersPage(preselectedFriends: selectedFriends),
                         ),
-                      ],
-                    ),
-                  );
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text("Create"),
-            ),
-          ],
+                      );
+                      if (friends != null) {
+                        setState(() {
+                          selectedFriends = List<String>.from(friends);
+                        });
+                      }
+                    },
+                    icon: const Icon(Icons.person_add),
+                    label: const Text("Add Members"),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    children: selectedFriends.map((friend) => Chip(label: Text(friend))).toList(),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: (selectedFriends.isEmpty || groupNameController.text.isEmpty)
+                      ? null
+                      : () {
+                    Provider.of<GroupProvider>(context, listen: false).addGroup(
+                      Group(
+                        name: groupNameController.text,
+                        members: selectedFriends,
+                      ),
+                    );
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Create"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -109,12 +109,13 @@ class _GroupsPageState extends State<GroupsPage> {
                         : "You are owed \$${group.balance.toStringAsFixed(2)}",
                     style: TextStyle(color: group.balance < 0 ? Colors.red : Colors.green),
                   ),
+
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => GroupDetailPage(groupName: group.name),
+                        builder: (context) => GroupDetailPage(groupName: group.name), // ✅ Now correctly defined
                       ),
                     );
                   },
@@ -124,9 +125,10 @@ class _GroupsPageState extends State<GroupsPage> {
           );
         },
       ),
+
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
-        onPressed: _showCreateGroupDialog,
+        onPressed: _showCreateGroupDialog, // ✅ This correctly creates a group
         child: const Icon(Icons.add),
       ),
     );

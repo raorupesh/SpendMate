@@ -16,20 +16,27 @@ class Transaction {
 
 class Group {
   String name;
-  List<Transaction> transactions; // This will be a mutable list
+  List<String> members;
+  List<Transaction> transactions;
 
-  // Constructor with a default empty list if no transactions are provided
-  Group({required this.name, List<Transaction>? transactions})
-      : transactions = transactions ?? []; // Use the given transactions or an empty list if null
+  Group({
+    required this.name,
+    required this.members,
+    List<Transaction>? transactions,
+  }) : transactions = transactions ?? [];
 
+  // ✅ Calculate balance based on transactions
   double get balance {
     double total = 0.0;
     for (var transaction in transactions) {
       total += transaction.amount;
     }
-    return total; // If no transactions, this will return 0.0
+    return total;
   }
 }
+
+
+
 
 
 
@@ -42,6 +49,17 @@ class GroupProvider with ChangeNotifier {
   void addGroup(Group group) {
     _groups.add(group);
     notifyListeners();
+  }
+
+  void leaveGroup(String groupName) {
+    _groups.removeWhere((group) => group.name == groupName);
+    notifyListeners();
+  }
+
+  void settleUpGroup(String groupName) {
+    Group group = _groups.firstWhere((group) => group.name == groupName);
+    group.transactions.clear(); // Clear all transactions
+    notifyListeners(); // Update UI
   }
 
   // Add a transaction to a group
