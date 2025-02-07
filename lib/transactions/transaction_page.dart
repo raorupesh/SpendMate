@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'split_method_page.dart';
-import 'package:flutter/services.dart';
+import 'package:spendmate/transactions/split_method_page.dart';
 
 class AddTransactionPage extends StatefulWidget {
   final String groupName;
@@ -17,13 +16,16 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime _transactionDate = DateTime.now();
-  String _splitMethod = "Equal"; // ✅ Default method is a string, not a Map
+  String _splitMethod = "Equal";
   String _payer = 'You';
   List<String> _selectedFriends = [];
-  Map<String, double> _participantShares = {}; // ✅ Correct structure
+  Map<String, double> _participantShares = {};
 
   @override
   Widget build(BuildContext context) {
+    final group = Provider.of<GroupProvider>(context).getGroup(widget.groupName);
+    List<String> groupMembers = group.members; // Get members of the group
+
     return Scaffold(
       appBar: AppBar(
         title: const Text("Add Transaction"),
@@ -41,11 +43,27 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             TextField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
-              ],
               decoration: const InputDecoration(labelText: 'Amount'),
             ),
+            const SizedBox(height: 16),
+
+            // ✅ Button to Select Participants
+            ListTile(
+              title: const Text("Participants"),
+              subtitle: Text(_selectedFriends.isNotEmpty
+                  ? _selectedFriends.join(", ")
+                  : "Select participants"),
+              trailing: const Icon(Icons.person_add),
+              onTap: () async {
+                List<String>? selectedParticipants = await _selectParticipantsDialog(groupMembers);
+                if (selectedParticipants != null) {
+                  setState(() {
+                    _selectedFriends = selectedParticipants;
+                  });
+                }
+              },
+            ),
+
             const SizedBox(height: 16),
             ListTile(
               title: const Text("Split Method"),
@@ -67,16 +85,18 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 );
               },
             ),
-            const SizedBox(height: 16),
-            const Text("Participants & Contributions", style: TextStyle(fontWeight: FontWeight.bold)),
-            Column(
-              children: _participantShares.entries.map((entry) {
-                return ListTile(
-                  title: Text(entry.key),
-                  trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
-                );
-              }).toList(),
-            ),
+
+            // const SizedBox(height: 16),
+            // const Text("Participants & Contributions", style: TextStyle(fontWeight: FontWeight.bold)),
+            // Column(
+            //   children: _participantShares.entries.map((entry) {
+            //     return ListTile(
+            //       title: Text(entry.key),
+            //       trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
+            //     );
+            //   }).toList(),
+            // ),
+
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () {
@@ -86,7 +106,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     description: _descriptionController.text.trim(),
                     amount: amount,
                     date: _transactionDate,
-                    participantShares: _participantShares, // ✅ Correctly passing participantShares
+                    participantShares: _participantShares,
                   );
                   Provider.of<GroupProvider>(context, listen: false)
                       .addTransaction(widget.groupName, transaction);
@@ -101,7 +121,51 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     );
   }
 
-  /// **Calculate Split Logic**
+  /// **Dialog to Select Participants**
+  Future<List<String>?> _selectParticipantsDialog(List<String> members) async {
+    List<String> tempSelected = List.from(_selectedFriends);
+    return await showDialog<List<String>>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Select Participants"),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView(
+              shrinkWrap: true,
+              children: members.map((member) {
+                return CheckboxListTile(
+                  title: Text(member),
+                  value: tempSelected.contains(member),
+                  onChanged: (bool? value) {
+                    setState(() {
+                      if (value == true) {
+                        tempSelected.add(member);
+                      } else {
+                        tempSelected.remove(member);
+                      }
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, null), // Cancel
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, tempSelected),
+              child: const Text("Confirm"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   Map<String, double> _calculateSplit(Map<String, dynamic> splitData) {
     double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
     Map<String, double> shares = {};
