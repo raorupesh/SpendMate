@@ -5,7 +5,6 @@ import 'package:spendmate/groups/select_participants_page.dart';
 class AddExpensePage extends StatefulWidget {
   const AddExpensePage({super.key});
 
-
   @override
   _AddExpensePageState createState() => _AddExpensePageState();
 }
@@ -14,7 +13,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
   final TextEditingController expenseNameController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
 
-  List<String> _groupMembers = ["Karthik", "Vamshi", "Friend 2", "Friend 3"]; // Example members
+  List<String> _groupMembers = [
+    "Karthik",
+    "Vamshi",
+    "Moin",
+    "Nandan"
+  ]; // Example members
   Set<String> _selectedParticipants = {}; // ✅ Use Set to prevent duplicates
 
   bool isSaveEnabled = false;
@@ -48,7 +52,9 @@ class _AddExpensePageState extends State<AddExpensePage> {
             TextField(
               controller: amountController,
               keyboardType: TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))],
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))
+              ],
               decoration: const InputDecoration(labelText: 'Amount'),
               onChanged: (_) => validateFields(),
             ),
@@ -73,7 +79,8 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 );
                 if (selected != null) {
                   setState(() {
-                    _selectedParticipants = Set.from(selected); // ✅ Prevents duplicates
+                    _selectedParticipants =
+                        Set.from(selected); //Prevents duplicates
                   });
                 }
               },
@@ -81,10 +88,12 @@ class _AddExpensePageState extends State<AddExpensePage> {
 
             const SizedBox(height: 32),
             ElevatedButton(
-              onPressed: isSaveEnabled ? () {
-                // Logic to save expense
-                Navigator.pop(context);
-              } : null,
+              onPressed: isSaveEnabled
+                  ? () {
+                      // Logic to save expense
+                      Navigator.pop(context);
+                    }
+                  : null,
               child: const Text("Save Expense"),
             ),
           ],

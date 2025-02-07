@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // To prevent back navigation
 import 'package:spendmate/validations/credential_validation_page.dart'; // Import the shared validation logic
 
 class LoginPage extends StatefulWidget {
@@ -18,12 +17,14 @@ class _LoginPageState extends State<LoginPage> {
   String emailErrorMessage = '';
   String passwordErrorMessage = '';
   bool emailFocused = false; // To track if the email field is interacted with
-  bool passwordFocused = false; // To track if the password field is interacted with
+  bool passwordFocused =
+      false; // To track if the password field is interacted with
 
   // This function is used to trigger setState and update the login button state
   void updateButtonState(Function callback) {
     setState(() {
-      isLoginEnabled = callback(); // We call the callback from validateFields to set the state
+      isLoginEnabled =
+          callback(); // We call the callback from validateFields to set the state
     });
   }
 
@@ -136,7 +137,8 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     onTap: () {
                       setState(() {
-                        passwordFocused = true; // Mark password field as focused
+                        passwordFocused =
+                            true; // Mark password field as focused
                       });
                     },
                   ),
@@ -157,9 +159,9 @@ class _LoginPageState extends State<LoginPage> {
                   ElevatedButton(
                     onPressed: isLoginEnabled
                         ? () {
-                      Navigator.pushReplacementNamed(
-                          context, '/'); // Navigate to the home page
-                    }
+                            Navigator.pushReplacementNamed(
+                                context, '/'); // Navigate to the home page
+                          }
                         : null,
                     // Disable the button if fields are empty or invalid
                     child: const Text('Login'),
@@ -170,7 +172,7 @@ class _LoginPageState extends State<LoginPage> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30)),
                       textStyle:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                   const SizedBox(height: 20),

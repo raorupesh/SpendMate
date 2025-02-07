@@ -36,11 +36,12 @@ class _SignUpPageState extends State<SignUpPage> {
     if (emailController.text.isEmpty) {
       emailErrorMessage = 'Email is required.';
       return false;
-    } else if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$").hasMatch(emailController.text)) {
+    } else if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+        .hasMatch(emailController.text)) {
       emailErrorMessage = 'Please enter a valid email.';
       return false;
     } else {
-      emailErrorMessage = '';  // No error
+      emailErrorMessage = ''; // No error
       return true;
     }
   }
@@ -54,7 +55,7 @@ class _SignUpPageState extends State<SignUpPage> {
       passwordErrorMessage = 'Password must be at least 6 characters.';
       return false;
     } else {
-      passwordErrorMessage = '';  // No error
+      passwordErrorMessage = ''; // No error
       return true;
     }
   }
@@ -64,11 +65,12 @@ class _SignUpPageState extends State<SignUpPage> {
     if (phoneController.text.isEmpty) {
       phoneErrorMessage = 'Phone number is required.';
       return false;
-    } else if (!RegExp(r"^\d+$").hasMatch(phoneController.text)) {  // Ensures only numbers are entered
+    } else if (!RegExp(r"^\d+$").hasMatch(phoneController.text)) {
+      // Ensures only numbers are entered
       phoneErrorMessage = 'Phone number must contain only numbers.';
       return false;
     } else {
-      phoneErrorMessage = '';  // No error
+      phoneErrorMessage = ''; // No error
       return true;
     }
   }
@@ -80,10 +82,33 @@ class _SignUpPageState extends State<SignUpPage> {
     bool isPasswordValid = validatePassword();
     bool isPhoneValid = validatePhoneNumber();
 
-    // Enable sign-up button if all fields are valid
-    setState(() {
-      isSignUpEnabled = isFullNameValid && isEmailValid && isPasswordValid && isPhoneValid;
-    });
+    // Only update the state if the widget is still mounted
+    if (mounted) {
+      setState(() {
+        isSignUpEnabled =
+            isFullNameValid && isEmailValid && isPasswordValid && isPhoneValid;
+      });
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Call validateFields after widget initialization (not in the constructor)
+    fullNameController.addListener(validateFields);
+    emailController.addListener(validateFields);
+    passwordController.addListener(validateFields);
+    phoneController.addListener(validateFields);
+  }
+
+  @override
+  void dispose() {
+    fullNameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -112,7 +137,6 @@ class _SignUpPageState extends State<SignUpPage> {
                   ),
                 ),
                 const SizedBox(height: 50),
-
                 // Full Name Input Field
                 const Text(
                   'Full Name',
@@ -131,11 +155,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   keyboardType: TextInputType.name,
-                  onChanged: (_) {
-                    setState(() {
-                      validateFields(); // Validate fields
-                    });
-                  },
                 ),
                 if (fullNameErrorMessage.isNotEmpty)
                   Align(
@@ -149,7 +168,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                 const SizedBox(height: 16),
-
                 // Phone Number Input Field with Country Code
                 const Text(
                   'Phone Number',
@@ -168,12 +186,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   initialCountryCode: 'US',
-                  keyboardType: TextInputType.phone,  // Ensures phone number only accepts numbers
-                  onChanged: (phone) {
-                    setState(() {
-                      validateFields();  // Validate fields
-                    });
-                  },
+                  keyboardType: TextInputType.phone,
                 ),
                 if (phoneErrorMessage.isNotEmpty)
                   Align(
@@ -187,7 +200,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                 const SizedBox(height: 16),
-
                 // Email Input Field
                 const Text(
                   'Email',
@@ -206,11 +218,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   keyboardType: TextInputType.emailAddress,
-                  onChanged: (_) {
-                    setState(() {
-                      validateFields(); // Validate fields
-                    });
-                  },
                 ),
                 if (emailErrorMessage.isNotEmpty)
                   Align(
@@ -224,7 +231,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                 const SizedBox(height: 16),
-
                 // Password Input Field
                 const Text(
                   'Password',
@@ -243,11 +249,6 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                   obscureText: true,
-                  onChanged: (_) {
-                    setState(() {
-                      validateFields(); // Validate fields
-                    });
-                  },
                 ),
                 if (passwordErrorMessage.isNotEmpty)
                   Align(
@@ -261,17 +262,17 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ),
                 const SizedBox(height: 20),
-
                 // Sign Up Button (Only enabled when valid)
                 ElevatedButton(
                   onPressed: isSignUpEnabled
                       ? () {
-                    Navigator.pushReplacementNamed(context, '/login');
-                  }
-                      : null,  // Disable button if fields are not valid
+                          Navigator.pushReplacementNamed(context, '/login');
+                        }
+                      : null,
                   child: const Text('Sign Up'),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 15),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30)),
                     backgroundColor: Colors.teal.shade500,

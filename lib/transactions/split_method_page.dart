@@ -4,7 +4,8 @@ class SplitMethodPage extends StatefulWidget {
   final String splitMethod;
   final ValueChanged<Map<String, dynamic>> onSave;
 
-  const SplitMethodPage({super.key, required this.splitMethod, required this.onSave});
+  const SplitMethodPage(
+      {super.key, required this.splitMethod, required this.onSave});
 
   @override
   _SplitMethodPageState createState() => _SplitMethodPageState();
@@ -18,7 +19,9 @@ class _SplitMethodPageState extends State<SplitMethodPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Select Split Method"), backgroundColor: Colors.teal),
+      appBar: AppBar(
+          title: const Text("Select Split Method"),
+          backgroundColor: Colors.teal),
       body: Column(
         children: [
           ListTile(
@@ -45,7 +48,8 @@ class _SplitMethodPageState extends State<SplitMethodPage> {
             TextField(
               controller: _customController,
               keyboardType: TextInputType.text,
-              decoration: const InputDecoration(labelText: "Enter custom amounts (comma separated)"),
+              decoration: const InputDecoration(
+                  labelText: "Enter custom amounts (comma separated)"),
             ),
           ListTile(
             title: const Text("Percentage Split"),
@@ -61,13 +65,16 @@ class _SplitMethodPageState extends State<SplitMethodPage> {
             TextField(
               controller: _percentageController,
               keyboardType: TextInputType.text,
-              decoration: const InputDecoration(labelText: "Enter percentages (comma separated)"),
+              decoration: const InputDecoration(
+                  labelText: "Enter percentages (comma separated)"),
             ),
           ElevatedButton(
             onPressed: () {
               Map<String, dynamic> splitData = {
                 "method": selectedMethod,
-                "values": selectedMethod == "Custom" ? _customController.text : _percentageController.text,
+                "values": selectedMethod == "Custom"
+                    ? _customController.text
+                    : _percentageController.text,
               };
               widget.onSave(splitData);
               Navigator.pop(context);

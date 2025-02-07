@@ -64,19 +64,20 @@ class TransactionDetailsPage extends StatelessWidget {
             // ✅ Use participantShares instead of participants
             transaction.participantShares.isNotEmpty
                 ? Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: transaction.participantShares.entries
-                  .map((entry) => ListTile(
-                leading: const Icon(Icons.person),
-                title: Text(entry.key),
-                trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
-              ))
-                  .toList(),
-            )
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: transaction.participantShares.entries
+                        .map((entry) => ListTile(
+                              leading: const Icon(Icons.person),
+                              title: Text(entry.key),
+                              trailing:
+                                  Text("\$${entry.value.toStringAsFixed(2)}"),
+                            ))
+                        .toList(),
+                  )
                 : const Text(
-              "No participants added.",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
-            ),
+                    "No participants added.",
+                    style: TextStyle(fontSize: 16, color: Colors.grey),
+                  ),
           ],
         ),
       ),
@@ -89,7 +90,8 @@ class TransactionDetailsPage extends StatelessWidget {
       builder: (BuildContext context) {
         return AlertDialog(
           title: const Text("Delete Transaction"),
-          content: const Text("Are you sure you want to delete this transaction?"),
+          content:
+              const Text("Are you sure you want to delete this transaction?"),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),

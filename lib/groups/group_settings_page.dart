@@ -42,7 +42,8 @@ class GroupSettingsPage extends StatelessWidget {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
                 onPressed: () {
                   _showLeaveGroupDialog(context);
@@ -70,7 +71,8 @@ class GroupSettingsPage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                Provider.of<GroupProvider>(context, listen: false).leaveGroup(groupName);
+                Provider.of<GroupProvider>(context, listen: false)
+                    .leaveGroup(groupName);
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
               child: const Text("Leave", style: TextStyle(color: Colors.red)),

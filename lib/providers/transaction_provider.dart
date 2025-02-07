@@ -14,7 +14,6 @@ class Transaction {
   });
 }
 
-
 class Group {
   String name;
   List<String> members;
@@ -76,7 +75,8 @@ class GroupProvider with ChangeNotifier {
   }
 
   // Update a transaction at the specific index
-  void updateTransaction(String groupName, int transactionIndex, Transaction updatedTransaction) {
+  void updateTransaction(
+      String groupName, int transactionIndex, Transaction updatedTransaction) {
     final group = _groups.firstWhere((group) => group.name == groupName);
     group.transactions[transactionIndex] = updatedTransaction;
     notifyListeners(); // Notify listeners to rebuild UI

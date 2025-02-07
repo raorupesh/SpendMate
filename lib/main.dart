@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Import provider package
-import 'package:spendmate/chores/chores_page.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/groups/groups_page.dart';
+import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
@@ -18,7 +17,8 @@ class SpendMateApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (context) => GroupProvider(), // Provide the GroupProvider to the app
+      create: (context) => GroupProvider(),
+      // Provide the GroupProvider to the app
       child: MaterialApp(
         title: 'SpendMate',
         theme: ThemeData(
@@ -27,9 +27,12 @@ class SpendMateApp extends StatelessWidget {
         ),
         initialRoute: '/login',
         routes: {
-          '/': (context) => const BottomNavBar(),  // The main page with bottom nav
-          '/login': (context) => const LoginPage(), // Login page
-          '/signup': (context) => const SignUpPage(), // SignUp page
+          '/': (context) => const BottomNavBar(),
+          // The main page with bottom nav
+          '/login': (context) => const LoginPage(),
+          // Login page
+          '/signup': (context) => const SignUpPage(),
+          // SignUp page
         },
         debugShowCheckedModeBanner: false,
       ),
@@ -50,8 +53,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final List<Widget> _pages = [
     const HomePage(),
     const GroupsPage(),
-    const ChoresPage(),   // Chores Page
-    const ProfilePage(), // Profile Page
+    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -63,7 +65,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex], // Update to reflect pages with Profile and Chores
+      body: _pages[_selectedIndex],
+      // Update to reflect pages with Profile and Chores
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -76,7 +79,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.task), // Chores Icon
-            label: 'Chores',
+            label: 'Profile',
           ),
         ],
         currentIndex: _selectedIndex,

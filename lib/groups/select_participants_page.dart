@@ -4,7 +4,8 @@ class SelectParticipantsPage extends StatefulWidget {
   final List<String> members;
   final List<String> selectedParticipants;
 
-  const SelectParticipantsPage({super.key, required this.members, required this.selectedParticipants});
+  const SelectParticipantsPage(
+      {super.key, required this.members, required this.selectedParticipants});
 
   @override
   _SelectParticipantsPageState createState() => _SelectParticipantsPageState();
@@ -16,7 +17,8 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
   @override
   void initState() {
     super.initState();
-    selectedParticipants = Set.from(widget.selectedParticipants); // ✅ Load selections
+    selectedParticipants =
+        Set.from(widget.selectedParticipants); // ✅ Load selections
   }
 
   @override
@@ -28,7 +30,10 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.pop(context, selectedParticipants.toList()); // ✅ Pass updated selections back
+            Navigator.pop(
+                context,
+                selectedParticipants
+                    .toList()); // ✅ Pass updated selections back
           },
         ),
       ),
@@ -40,7 +45,8 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
             onChanged: (bool? value) {
               setState(() {
                 if (value == true) {
-                  selectedParticipants.add(member); // ✅ Adds participant instantly
+                  selectedParticipants
+                      .add(member); // ✅ Adds participant instantly
                 } else {
                   selectedParticipants.remove(member); // ✅ Removes instantly
                 }

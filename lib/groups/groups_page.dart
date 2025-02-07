@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/groups/group_details_page.dart'; // ✅ Fix: Import this file
 import 'package:spendmate/groups/add_group_members_page.dart';
+import 'package:spendmate/groups/group_details_page.dart'; // ✅ Fix: Import this file
+import 'package:spendmate/providers/transaction_provider.dart';
 
 class GroupsPage extends StatefulWidget {
   const GroupsPage({super.key});
@@ -28,8 +28,10 @@ class _GroupsPageState extends State<GroupsPage> {
                 children: [
                   TextField(
                     controller: groupNameController,
-                    textCapitalization: TextCapitalization.words, // ✅ Capitalize first letter of each word
-                    decoration: const InputDecoration(hintText: "Enter group name"),
+                    textCapitalization: TextCapitalization.words,
+                    // ✅ Capitalize first letter of each word
+                    decoration:
+                        const InputDecoration(hintText: "Enter group name"),
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 10),
@@ -38,7 +40,8 @@ class _GroupsPageState extends State<GroupsPage> {
                       final friends = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddGroupMembersPage(preselectedFriends: selectedFriends),
+                          builder: (context) => AddGroupMembersPage(
+                              preselectedFriends: selectedFriends),
                         ),
                       );
                       if (friends != null) {
@@ -52,7 +55,9 @@ class _GroupsPageState extends State<GroupsPage> {
                   ),
                   const SizedBox(height: 10),
                   Wrap(
-                    children: selectedFriends.map((friend) => Chip(label: Text(friend))).toList(),
+                    children: selectedFriends
+                        .map((friend) => Chip(label: Text(friend)))
+                        .toList(),
                   ),
                 ],
               ),
@@ -62,17 +67,19 @@ class _GroupsPageState extends State<GroupsPage> {
                   child: const Text("Cancel"),
                 ),
                 ElevatedButton(
-                  onPressed: (selectedFriends.isEmpty || groupNameController.text.isEmpty)
+                  onPressed: (selectedFriends.isEmpty ||
+                          groupNameController.text.isEmpty)
                       ? null
                       : () {
-                    Provider.of<GroupProvider>(context, listen: false).addGroup(
-                      Group(
-                        name: groupNameController.text,
-                        members: selectedFriends,
-                      ),
-                    );
-                    Navigator.pop(context);
-                  },
+                          Provider.of<GroupProvider>(context, listen: false)
+                              .addGroup(
+                            Group(
+                              name: groupNameController.text,
+                              members: selectedFriends,
+                            ),
+                          );
+                          Navigator.pop(context);
+                        },
                   child: const Text("Create"),
                 ),
               ],
@@ -99,24 +106,29 @@ class _GroupsPageState extends State<GroupsPage> {
               final group = groupProvider.groups[index];
               return Card(
                 elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 child: ListTile(
-                  title: Text(group.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  title: Text(group.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: group.transactions.isEmpty
                       ? const Text("No transactions yet")
                       : Text(
-                    group.balance < 0
-                        ? "You owe \$${group.balance.abs().toStringAsFixed(2)}"
-                        : "You are owed \$${group.balance.toStringAsFixed(2)}",
-                    style: TextStyle(color: group.balance < 0 ? Colors.red : Colors.green),
-                  ),
-
+                          group.balance < 0
+                              ? "You owe \$${group.balance.abs().toStringAsFixed(2)}"
+                              : "You are owed \$${group.balance.toStringAsFixed(2)}",
+                          style: TextStyle(
+                              color: group.balance < 0
+                                  ? Colors.red
+                                  : Colors.green),
+                        ),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => GroupDetailPage(groupName: group.name), // ✅ Now correctly defined
+                        builder: (context) => GroupDetailPage(
+                            groupName: group.name), // ✅ Now correctly defined
                       ),
                     );
                   },
@@ -126,7 +138,6 @@ class _GroupsPageState extends State<GroupsPage> {
           );
         },
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
         onPressed: _showCreateGroupDialog, // ✅ This correctly creates a group

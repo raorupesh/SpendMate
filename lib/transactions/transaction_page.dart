@@ -23,7 +23,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final group = Provider.of<GroupProvider>(context).getGroup(widget.groupName);
+    final group =
+        Provider.of<GroupProvider>(context).getGroup(widget.groupName);
     List<String> groupMembers = group.members; // Get members of the group
 
     return Scaffold(
@@ -38,11 +39,13 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           children: [
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Transaction Description'),
+              decoration:
+                  const InputDecoration(labelText: 'Transaction Description'),
             ),
             TextField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(labelText: 'Amount'),
             ),
             const SizedBox(height: 16),
@@ -55,7 +58,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                   : "Select participants"),
               trailing: const Icon(Icons.person_add),
               onTap: () async {
-                List<String>? selectedParticipants = await _selectParticipantsDialog(groupMembers);
+                List<String>? selectedParticipants =
+                    await _selectParticipantsDialog(groupMembers);
                 if (selectedParticipants != null) {
                   setState(() {
                     _selectedFriends = selectedParticipants;
@@ -165,7 +169,6 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     );
   }
 
-
   Map<String, double> _calculateSplit(Map<String, dynamic> splitData) {
     double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
     Map<String, double> shares = {};
@@ -184,7 +187,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     } else if (splitData['method'] == "Percentage") {
       List<String> percentages = splitData['values'].split(',');
       for (int i = 0; i < _selectedFriends.length; i++) {
-        shares[_selectedFriends[i]] = (double.parse(percentages[i]) / 100) * totalAmount;
+        shares[_selectedFriends[i]] =
+            (double.parse(percentages[i]) / 100) * totalAmount;
       }
     }
 

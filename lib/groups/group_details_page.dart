@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/transactions/transaction_page.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
+import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/transactions/transaction_details_page.dart'; // ✅ Import Transaction Details Page
-
+import 'package:spendmate/transactions/transaction_page.dart';
 
 class GroupDetailPage extends StatelessWidget {
   final String groupName;
@@ -37,29 +36,32 @@ class GroupDetailPage extends StatelessWidget {
       body: group.transactions.isEmpty
           ? const Center(child: Text("No transactions yet."))
           : ListView.builder(
-        itemCount: group.transactions.length,
-        itemBuilder: (context, index) {
-          final transaction = group.transactions[index];
-          return Card(
-            child: ListTile(
-              title: Text(transaction.description),
-              subtitle: Text("Amount: \$${transaction.amount.toStringAsFixed(2)}"),
-              trailing: Text(transaction.date.toLocal().toString().split(' ')[0]),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => TransactionDetailsPage(
-                      groupName: group.name,
-                      transactionIndex: index, // ✅ Pass transaction index correctly
-                    ),
+              itemCount: group.transactions.length,
+              itemBuilder: (context, index) {
+                final transaction = group.transactions[index];
+                return Card(
+                  child: ListTile(
+                    title: Text(transaction.description),
+                    subtitle: Text(
+                        "Amount: \$${transaction.amount.toStringAsFixed(2)}"),
+                    trailing: Text(
+                        transaction.date.toLocal().toString().split(' ')[0]),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => TransactionDetailsPage(
+                            groupName: group.name,
+                            transactionIndex:
+                                index, // ✅ Pass transaction index correctly
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
-      ),
 
       // ✅ Floating Action Button to Add Transactions
       floatingActionButton: FloatingActionButton(

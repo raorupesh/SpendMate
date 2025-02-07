@@ -10,13 +10,14 @@ class AddGroupMembersPage extends StatefulWidget {
 }
 
 class _AddGroupMembersPageState extends State<AddGroupMembersPage> {
-  final List<String> friends = ["bhAAi", "Moin Beta", "Nandan", "Karthik", "Vamshi"];
+  final List<String> friends = ['Vamshi', 'Karthik', 'Nandan', 'Moin'];
   late Set<String> selectedFriends;
 
   @override
   void initState() {
     super.initState();
-    selectedFriends = widget.preselectedFriends.toSet(); // Load previous selection
+    selectedFriends =
+        widget.preselectedFriends.toSet(); // Load previous selection
   }
 
   @override
