@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
 import 'split_method_page.dart';
 
 class AddExpensePage extends StatefulWidget {
