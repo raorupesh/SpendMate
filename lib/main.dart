@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart'; // Import provider package
+import 'package:provider/provider.dart';
 import 'package:spendmate/groups/groups_page.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/screens/home_page.dart';

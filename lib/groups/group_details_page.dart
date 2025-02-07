@@ -2,17 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/transactions/transaction_details_page.dart'; // ✅ Import Transaction Details Page
+import 'package:spendmate/transactions/transaction_details_page.dart';
 import 'package:spendmate/transactions/transaction_page.dart';
 
-class GroupDetailPage extends StatelessWidget {
+class GroupDetailPage extends StatefulWidget {
   final String groupName;
 
   const GroupDetailPage({super.key, required this.groupName});
 
   @override
+  _GroupDetailPageState createState() => _GroupDetailPageState();
+}
+
+class _GroupDetailPageState extends State<GroupDetailPage> {
+  late List<String> groupMembers;
+
+  @override
+  void initState() {
+    super.initState();
+    final group = Provider.of<GroupProvider>(context, listen: false).getGroup(widget.groupName);
+    groupMembers = group.members;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final group = Provider.of<GroupProvider>(context).getGroup(groupName);
+    final group = Provider.of<GroupProvider>(context).getGroup(widget.groupName);
 
     return Scaffold(
       appBar: AppBar(
@@ -21,14 +35,23 @@ class GroupDetailPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
+            onPressed: () async {
               // Navigate to Group Settings Page
-              Navigator.push(
+              final updatedMembers = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => GroupSettingsPage(groupName: groupName),
+                  builder: (context) => GroupSettingsPage(
+                    groupName: widget.groupName,
+                    groupMembers: groupMembers, // Pass group members here
+                  ),
                 ),
               );
+              if (updatedMembers != null) {
+                setState(() {
+                  groupMembers = updatedMembers;
+                  group.members = updatedMembers; // Update the group members
+                });
+              }
             },
           ),
         ],
@@ -52,8 +75,7 @@ class GroupDetailPage extends StatelessWidget {
                         MaterialPageRoute(
                           builder: (context) => TransactionDetailsPage(
                             groupName: group.name,
-                            transactionIndex:
-                                index, //Pass transaction index correctly
+                            transactionIndex: index, // Pass transaction index correctly
                           ),
                         ),
                       );
@@ -62,15 +84,14 @@ class GroupDetailPage extends StatelessWidget {
                 );
               },
             ),
-
-      //Floating Action Button to Add Transactions
+      // Floating Action Button to Add Transactions
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
         onPressed: () {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddTransactionPage(groupName: groupName),
+              builder: (context) => AddTransactionPage(groupName: widget.groupName),
             ),
           );
         },

@@ -13,13 +13,9 @@ class _AddExpensePageState extends State<AddExpensePage> {
   final TextEditingController expenseNameController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
 
-  List<String> _groupMembers = [
-    "Karthik",
-    "Vamshi",
-    "Moin",
-    "Nandan"
-  ]; // Example members
-  Set<String> _selectedParticipants = {}; //Use Set to prevent duplicates
+  // Use the same list of friends from AddGroupMembersPage
+  final List<String> _groupMembers = ['Vamshi', 'Karthik', 'Nandan', 'Moin'];
+  Set<String> _selectedParticipants = {}; // Use Set to prevent duplicates
 
   bool isSaveEnabled = false;
 
@@ -60,7 +56,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
             ),
             const SizedBox(height: 16),
 
-            //Button to Select Participants (Opens new selection screen)
+            // Button to Select Participants (Opens new selection screen)
             ListTile(
               title: const Text("Participants"),
               subtitle: Text(_selectedParticipants.isNotEmpty
@@ -80,7 +76,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                 if (selected != null) {
                   setState(() {
                     _selectedParticipants =
-                        Set.from(selected); //Prevents duplicates
+                        Set.from(selected); // Prevents duplicates
                   });
                 }
               },
