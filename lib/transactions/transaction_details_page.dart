@@ -61,7 +61,7 @@ class TransactionDetailsPage extends StatelessWidget {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
-            // ✅ Use participantShares instead of participants
+            //Use participantShares instead of participants
             transaction.participantShares.isNotEmpty
                 ? Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

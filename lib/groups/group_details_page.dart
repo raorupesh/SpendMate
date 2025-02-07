@@ -53,7 +53,7 @@ class GroupDetailPage extends StatelessWidget {
                           builder: (context) => TransactionDetailsPage(
                             groupName: group.name,
                             transactionIndex:
-                                index, // ✅ Pass transaction index correctly
+                                index, //Pass transaction index correctly
                           ),
                         ),
                       );
@@ -63,7 +63,7 @@ class GroupDetailPage extends StatelessWidget {
               },
             ),
 
-      // ✅ Floating Action Button to Add Transactions
+      //Floating Action Button to Add Transactions
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
         onPressed: () {

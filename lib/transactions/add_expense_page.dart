@@ -19,7 +19,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
     "Moin",
     "Nandan"
   ]; // Example members
-  Set<String> _selectedParticipants = {}; // ✅ Use Set to prevent duplicates
+  Set<String> _selectedParticipants = {}; //Use Set to prevent duplicates
 
   bool isSaveEnabled = false;
 
@@ -60,7 +60,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
             ),
             const SizedBox(height: 16),
 
-            // ✅ Button to Select Participants (Opens new selection screen)
+            //Button to Select Participants (Opens new selection screen)
             ListTile(
               title: const Text("Participants"),
               subtitle: Text(_selectedParticipants.isNotEmpty

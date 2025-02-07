@@ -50,7 +50,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             ),
             const SizedBox(height: 16),
 
-            // ✅ Button to Select Participants
+            //Button to Select Participants
             ListTile(
               title: const Text("Participants"),
               subtitle: Text(_selectedFriends.isNotEmpty
@@ -89,17 +89,6 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 );
               },
             ),
-
-            // const SizedBox(height: 16),
-            // const Text("Participants & Contributions", style: TextStyle(fontWeight: FontWeight.bold)),
-            // Column(
-            //   children: _participantShares.entries.map((entry) {
-            //     return ListTile(
-            //       title: Text(entry.key),
-            //       trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
-            //     );
-            //   }).toList(),
-            // ),
 
             const SizedBox(height: 32),
             ElevatedButton(

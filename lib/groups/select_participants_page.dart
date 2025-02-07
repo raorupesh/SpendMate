@@ -18,7 +18,7 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
   void initState() {
     super.initState();
     selectedParticipants =
-        Set.from(widget.selectedParticipants); // ✅ Load selections
+        Set.from(widget.selectedParticipants); //Load selections
   }
 
   @override
@@ -33,7 +33,7 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
             Navigator.pop(
                 context,
                 selectedParticipants
-                    .toList()); // ✅ Pass updated selections back
+                    .toList()); //Pass updated selections back
           },
         ),
       ),
@@ -46,9 +46,9 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
               setState(() {
                 if (value == true) {
                   selectedParticipants
-                      .add(member); // ✅ Adds participant instantly
+                      .add(member); //Adds participant instantly
                 } else {
-                  selectedParticipants.remove(member); // ✅ Removes instantly
+                  selectedParticipants.remove(member); //Removes instantly
                 }
               });
             },

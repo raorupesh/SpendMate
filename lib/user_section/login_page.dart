@@ -17,8 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   String emailErrorMessage = '';
   String passwordErrorMessage = '';
   bool emailFocused = false; // To track if the email field is interacted with
-  bool passwordFocused =
-      false; // To track if the password field is interacted with
+  bool passwordFocused = false; // To track if the password field is interacted with
 
   // This function is used to trigger setState and update the login button state
   void updateButtonState(Function callback) {

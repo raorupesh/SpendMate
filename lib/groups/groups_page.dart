@@ -29,7 +29,7 @@ class _GroupsPageState extends State<GroupsPage> {
                   TextField(
                     controller: groupNameController,
                     textCapitalization: TextCapitalization.words,
-                    // ✅ Capitalize first letter of each word
+                    //Capitalize first letter of each word
                     decoration:
                         const InputDecoration(hintText: "Enter group name"),
                     onChanged: (_) => setState(() {}),
@@ -128,7 +128,7 @@ class _GroupsPageState extends State<GroupsPage> {
                       context,
                       MaterialPageRoute(
                         builder: (context) => GroupDetailPage(
-                            groupName: group.name), // ✅ Now correctly defined
+                            groupName: group.name), //Now correctly defined
                       ),
                     );
                   },
@@ -140,7 +140,7 @@ class _GroupsPageState extends State<GroupsPage> {
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
-        onPressed: _showCreateGroupDialog, // ✅ This correctly creates a group
+        onPressed: _showCreateGroupDialog, //This correctly creates a group
         child: const Icon(Icons.add),
       ),
     );

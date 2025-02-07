@@ -25,7 +25,7 @@ class Group {
     List<Transaction>? transactions,
   }) : transactions = transactions ?? [];
 
-  // ✅ Add balance calculation to fix the issue
+  //Add balance calculation to fix the issue
   double get balance {
     double total = 0.0;
     for (var transaction in transactions) {

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For SystemNavigator to close app
-
+import 'package:flutter/services.dart';
 import '../transactions/add_expense_page.dart';
 
 class HomePage extends StatelessWidget {
