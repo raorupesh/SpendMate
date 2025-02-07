@@ -28,6 +28,7 @@ class _GroupsPageState extends State<GroupsPage> {
                 children: [
                   TextField(
                     controller: groupNameController,
+                    textCapitalization: TextCapitalization.words, // ✅ Capitalize first letter of each word
                     decoration: const InputDecoration(hintText: "Enter group name"),
                     onChanged: (_) => setState(() {}),
                   ),

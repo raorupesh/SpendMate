@@ -61,6 +61,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
           title: const Text('Enter Notes'),
           content: TextField(
             controller: notesController,
+            textCapitalization: TextCapitalization.words,
             maxLines: 5,
             decoration: const InputDecoration(
               hintText: 'Write your notes here...',
@@ -134,6 +135,7 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   // Expense Name Field (Text only, max 100 characters)
                   TextField(
                     controller: expenseNameController,
+                    textCapitalization: TextCapitalization.words,
                     focusNode: expenseNameFocusNode,
                     decoration: InputDecoration(
                       labelText: 'Expense Name',

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'split_method_page.dart';
 import 'package:spendmate/groups/friends_page.dart';
+import 'package:flutter/services.dart';
 
 class AddTransactionPage extends StatefulWidget {
   final String groupName;
@@ -53,11 +54,15 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           children: [
             TextField(
               controller: _descriptionController,
+              textCapitalization: TextCapitalization.words, // ✅ Capitalize first letter of each word
               decoration: const InputDecoration(labelText: 'Transaction Description'),
             ),
             TextField(
               controller: _amountController,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true), // ✅ Allow decimal values
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')), // ✅ Restrict to numbers & up to 2 decimal places
+              ],
               decoration: const InputDecoration(labelText: 'Amount'),
             ),
             const SizedBox(height: 16),
@@ -135,7 +140,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 final amount = double.tryParse(_amountController.text);
                 if (amount != null && _descriptionController.text.isNotEmpty) {
                   final transaction = Transaction(
-                    description: _descriptionController.text,
+                    description: _descriptionController.text.trim(),
                     amount: amount,
                     date: _transactionDate,
                     participants: _selectedFriends,
