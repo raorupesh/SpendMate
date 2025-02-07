@@ -5,6 +5,7 @@ import 'package:spendmate/groups/select_participants_page.dart';
 class AddExpensePage extends StatefulWidget {
   const AddExpensePage({super.key});
 
+
   @override
   _AddExpensePageState createState() => _AddExpensePageState();
 }
