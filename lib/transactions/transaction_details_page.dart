@@ -22,7 +22,6 @@ class TransactionDetailsPage extends StatelessWidget {
         title: const Text("Transaction Details"),
         backgroundColor: Colors.teal,
         actions: [
-          // ✅ Delete button to remove transaction
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {
@@ -58,18 +57,19 @@ class TransactionDetailsPage extends StatelessWidget {
             const Divider(),
             const SizedBox(height: 10),
 
-            const Text("Participants:",
+            const Text("Participants & Contributions:",
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
 
-            // ✅ Show participants only if they exist
-            transaction.participants.isNotEmpty
+            // ✅ Use participantShares instead of participants
+            transaction.participantShares.isNotEmpty
                 ? Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: transaction.participants
-                  .map((participant) => ListTile(
+              children: transaction.participantShares.entries
+                  .map((entry) => ListTile(
                 leading: const Icon(Icons.person),
-                title: Text(participant),
+                title: Text(entry.key),
+                trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
               ))
                   .toList(),
             )
@@ -83,7 +83,6 @@ class TransactionDetailsPage extends StatelessWidget {
     );
   }
 
-  // ✅ Confirmation dialog for deleting a transaction
   void _showDeleteConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -93,15 +92,15 @@ class TransactionDetailsPage extends StatelessWidget {
           content: const Text("Are you sure you want to delete this transaction?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context), // Cancel
+              onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),
             TextButton(
               onPressed: () {
                 Provider.of<GroupProvider>(context, listen: false)
                     .deleteTransaction(groupName, transactionIndex);
-                Navigator.pop(context); // Close dialog
-                Navigator.pop(context); // Go back to group details
+                Navigator.pop(context);
+                Navigator.pop(context);
               },
               child: const Text("Delete", style: TextStyle(color: Colors.red)),
             ),

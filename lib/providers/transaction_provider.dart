@@ -4,15 +4,16 @@ class Transaction {
   String description;
   double amount;
   DateTime date;
-  List<String> participants; // List of participants
+  Map<String, double> participantShares; // Stores split amounts per participant
 
   Transaction({
     required this.description,
     required this.amount,
     required this.date,
-    required this.participants,
+    required this.participantShares,
   });
 }
+
 
 class Group {
   String name;

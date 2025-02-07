@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'split_method_page.dart';
-import 'package:spendmate/groups/friends_page.dart';
 import 'package:flutter/services.dart';
 
 class AddTransactionPage extends StatefulWidget {
@@ -18,9 +17,10 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   final _descriptionController = TextEditingController();
   final _amountController = TextEditingController();
   DateTime _transactionDate = DateTime.now();
-  String _splitMethod = 'Equal';
+  String _splitMethod = "Equal"; // ✅ Default method is a string, not a Map
   String _payer = 'You';
   List<String> _selectedFriends = [];
+  Map<String, double> _participantShares = {}; // ✅ Correct structure
 
   @override
   Widget build(BuildContext context) {
@@ -28,24 +28,6 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       appBar: AppBar(
         title: const Text("Add Transaction"),
         backgroundColor: Colors.teal,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.people),
-            onPressed: () async {
-              final selectedFriends = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const FriendsPage(),
-                ),
-              );
-              if (selectedFriends != null) {
-                setState(() {
-                  _selectedFriends = List<String>.from(selectedFriends);
-                });
-              }
-            },
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -54,65 +36,15 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           children: [
             TextField(
               controller: _descriptionController,
-              textCapitalization: TextCapitalization.words, // ✅ Capitalize first letter of each word
               decoration: const InputDecoration(labelText: 'Transaction Description'),
             ),
             TextField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true), // ✅ Allow decimal values
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')), // ✅ Restrict to numbers & up to 2 decimal places
+                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$')),
               ],
               decoration: const InputDecoration(labelText: 'Amount'),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text("Paid by"),
-              subtitle: Text(_payer),
-              onTap: () async {
-                String? selectedPayer = await showDialog<String>(
-                  context: context,
-                  builder: (BuildContext context) {
-                    return AlertDialog(
-                      title: const Text("Select Payer"),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: ['You', ..._selectedFriends]
-                            .map((e) => ListTile(
-                          title: Text(e),
-                          onTap: () {
-                            Navigator.pop(context, e);
-                          },
-                        ))
-                            .toList(),
-                      ),
-                    );
-                  },
-                );
-                if (selectedPayer != null) {
-                  setState(() {
-                    _payer = selectedPayer;
-                  });
-                }
-              },
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              title: const Text("Date of Transaction"),
-              subtitle: Text("${_transactionDate.toLocal()}".split(' ')[0]),
-              onTap: () async {
-                DateTime? picked = await showDatePicker(
-                  context: context,
-                  initialDate: _transactionDate,
-                  firstDate: DateTime(2020),
-                  lastDate: DateTime(2100),
-                );
-                if (picked != null && picked != _transactionDate) {
-                  setState(() {
-                    _transactionDate = picked;
-                  });
-                }
-              },
             ),
             const SizedBox(height: 16),
             ListTile(
@@ -124,15 +56,26 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                   MaterialPageRoute(
                     builder: (context) => SplitMethodPage(
                       splitMethod: _splitMethod,
-                      onSave: (method) {
+                      onSave: (splitData) {
                         setState(() {
-                          _splitMethod = method;
+                          _splitMethod = splitData['method'];
+                          _participantShares = _calculateSplit(splitData);
                         });
                       },
                     ),
                   ),
                 );
               },
+            ),
+            const SizedBox(height: 16),
+            const Text("Participants & Contributions", style: TextStyle(fontWeight: FontWeight.bold)),
+            Column(
+              children: _participantShares.entries.map((entry) {
+                return ListTile(
+                  title: Text(entry.key),
+                  trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
+                );
+              }).toList(),
             ),
             const SizedBox(height: 32),
             ElevatedButton(
@@ -143,7 +86,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     description: _descriptionController.text.trim(),
                     amount: amount,
                     date: _transactionDate,
-                    participants: _selectedFriends,
+                    participantShares: _participantShares, // ✅ Correctly passing participantShares
                   );
                   Provider.of<GroupProvider>(context, listen: false)
                       .addTransaction(widget.groupName, transaction);
@@ -156,5 +99,31 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
         ),
       ),
     );
+  }
+
+  /// **Calculate Split Logic**
+  Map<String, double> _calculateSplit(Map<String, dynamic> splitData) {
+    double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    Map<String, double> shares = {};
+
+    if (splitData['method'] == "Equal") {
+      double splitAmount = totalAmount / (_selectedFriends.length + 1);
+      shares[_payer] = splitAmount;
+      for (var friend in _selectedFriends) {
+        shares[friend] = splitAmount;
+      }
+    } else if (splitData['method'] == "Custom") {
+      List<String> amounts = splitData['values'].split(',');
+      for (int i = 0; i < _selectedFriends.length; i++) {
+        shares[_selectedFriends[i]] = double.parse(amounts[i]);
+      }
+    } else if (splitData['method'] == "Percentage") {
+      List<String> percentages = splitData['values'].split(',');
+      for (int i = 0; i < _selectedFriends.length; i++) {
+        shares[_selectedFriends[i]] = (double.parse(percentages[i]) / 100) * totalAmount;
+      }
+    }
+
+    return shares;
   }
 }

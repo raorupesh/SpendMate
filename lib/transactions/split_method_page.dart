@@ -1,49 +1,78 @@
-// split_method_page.dart
 import 'package:flutter/material.dart';
 
-class SplitMethodPage extends StatelessWidget {
+class SplitMethodPage extends StatefulWidget {
   final String splitMethod;
-  final ValueChanged<String> onSave;
+  final ValueChanged<Map<String, dynamic>> onSave;
 
   const SplitMethodPage({super.key, required this.splitMethod, required this.onSave});
 
   @override
+  _SplitMethodPageState createState() => _SplitMethodPageState();
+}
+
+class _SplitMethodPageState extends State<SplitMethodPage> {
+  final TextEditingController _customController = TextEditingController();
+  final TextEditingController _percentageController = TextEditingController();
+  String selectedMethod = "Equal";
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Select Split Method"),
-        backgroundColor: Colors.teal,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.cancel),
-            onPressed: () {
-              Navigator.pop(context);
-            },
-          ),
-        ],
-      ),
-      body: ListView(
+      appBar: AppBar(title: const Text("Select Split Method"), backgroundColor: Colors.teal),
+      body: Column(
         children: [
           ListTile(
             title: const Text("Equal Split"),
-            onTap: () {
-              onSave("Equal");
-              Navigator.pop(context);
-            },
+            leading: Radio(
+              value: "Equal",
+              groupValue: selectedMethod,
+              onChanged: (value) {
+                setState(() => selectedMethod = value!);
+              },
+            ),
           ),
           ListTile(
             title: const Text("Custom Split"),
-            onTap: () {
-              // Navigate to custom split page
-              Navigator.pop(context);
-            },
+            leading: Radio(
+              value: "Custom",
+              groupValue: selectedMethod,
+              onChanged: (value) {
+                setState(() => selectedMethod = value!);
+              },
+            ),
           ),
+          if (selectedMethod == "Custom")
+            TextField(
+              controller: _customController,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(labelText: "Enter custom amounts (comma separated)"),
+            ),
           ListTile(
             title: const Text("Percentage Split"),
-            onTap: () {
-              // Navigate to percentage split page
+            leading: Radio(
+              value: "Percentage",
+              groupValue: selectedMethod,
+              onChanged: (value) {
+                setState(() => selectedMethod = value!);
+              },
+            ),
+          ),
+          if (selectedMethod == "Percentage")
+            TextField(
+              controller: _percentageController,
+              keyboardType: TextInputType.text,
+              decoration: const InputDecoration(labelText: "Enter percentages (comma separated)"),
+            ),
+          ElevatedButton(
+            onPressed: () {
+              Map<String, dynamic> splitData = {
+                "method": selectedMethod,
+                "values": selectedMethod == "Custom" ? _customController.text : _percentageController.text,
+              };
+              widget.onSave(splitData);
               Navigator.pop(context);
             },
+            child: const Text("Save Split Method"),
           ),
         ],
       ),
