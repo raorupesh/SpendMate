@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
+import 'package:spendmate/groups/add_group_members_page.dart';
 
-class GroupSettingsPage extends StatelessWidget {
+class GroupSettingsPage extends StatefulWidget {
   final String groupName;
+  final List<String> groupMembers;
 
-  const GroupSettingsPage({super.key, required this.groupName});
+  const GroupSettingsPage({super.key, required this.groupName, required this.groupMembers});
+
+  @override
+  _GroupSettingsPageState createState() => _GroupSettingsPageState();
+}
+
+class _GroupSettingsPageState extends State<GroupSettingsPage> {
+  late List<String> groupMembers;
+
+  @override
+  void initState() {
+    super.initState();
+    groupMembers = widget.groupMembers;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final group = Provider.of<GroupProvider>(context).getGroup(groupName);
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Group Settings"),
@@ -28,11 +39,11 @@ class GroupSettingsPage extends StatelessWidget {
             const SizedBox(height: 10),
             Expanded(
               child: ListView.builder(
-                itemCount: group.members.length,
+                itemCount: groupMembers.length,
                 itemBuilder: (context, index) {
                   return ListTile(
                     leading: const Icon(Icons.person),
-                    title: Text(group.members[index]),
+                    title: Text(groupMembers[index]),
                   );
                 },
               ),
@@ -41,9 +52,34 @@ class GroupSettingsPage extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                ),
+                onPressed: () async {
+                  final updatedMembers = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => AddGroupMembersPage(
+                        preselectedFriends: groupMembers,
+                      ),
+                    ),
+                  );
+                  if (updatedMembers != null) {
+                    setState(() {
+                      groupMembers = updatedMembers;
+                    });
+                    Navigator.pop(context, updatedMembers); // Pass updated members back
+                  }
+                },
+                child: const Text("Modify Members"),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Center(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
                 onPressed: () {
                   _showLeaveGroupDialog(context);
@@ -71,8 +107,8 @@ class GroupSettingsPage extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                Provider.of<GroupProvider>(context, listen: false)
-                    .leaveGroup(groupName);
+                // Assuming you have a method to leave the group
+                // leaveGroup(groupName);
                 Navigator.popUntil(context, (route) => route.isFirst);
               },
               child: const Text("Leave", style: TextStyle(color: Colors.red)),
