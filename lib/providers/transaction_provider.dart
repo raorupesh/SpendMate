@@ -4,15 +4,16 @@ class Transaction {
   String description;
   double amount;
   DateTime date;
-  List<String> participants; // List of participants
+  Map<String, double> participantShares; // Stores split amounts per participant
 
   Transaction({
     required this.description,
     required this.amount,
     required this.date,
-    required this.participants,
+    required this.participantShares,
   });
 }
+
 
 class Group {
   String name;
@@ -25,7 +26,7 @@ class Group {
     List<Transaction>? transactions,
   }) : transactions = transactions ?? [];
 
-  // ✅ Calculate balance based on transactions
+  // ✅ Add balance calculation to fix the issue
   double get balance {
     double total = 0.0;
     for (var transaction in transactions) {
@@ -34,11 +35,6 @@ class Group {
     return total;
   }
 }
-
-
-
-
-
 
 class GroupProvider with ChangeNotifier {
   List<Group> _groups = [];

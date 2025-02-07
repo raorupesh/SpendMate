@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 
-class TransactionDetailsPage extends StatefulWidget {
+class TransactionDetailsPage extends StatelessWidget {
   final String groupName;
   final int transactionIndex;
 
@@ -13,37 +13,9 @@ class TransactionDetailsPage extends StatefulWidget {
   });
 
   @override
-  _TransactionDetailsPageState createState() => _TransactionDetailsPageState();
-}
-
-class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
-  late TextEditingController _descriptionController;
-  late TextEditingController _amountController;
-  DateTime _transactionDate = DateTime.now();
-
-  @override
-  void initState() {
-    super.initState();
-    final group = Provider.of<GroupProvider>(context, listen: false)
-        .getGroup(widget.groupName);
-    final transaction = group.transactions[widget.transactionIndex];
-
-    _descriptionController = TextEditingController(text: transaction.description);
-    _amountController = TextEditingController(text: transaction.amount.toString());
-    _transactionDate = transaction.date;
-  }
-
-  @override
-  void dispose() {
-    _descriptionController.dispose();
-    _amountController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final group = Provider.of<GroupProvider>(context).getGroup(widget.groupName);
-    final transaction = group.transactions[widget.transactionIndex];
+    final group = Provider.of<GroupProvider>(context).getGroup(groupName);
+    final transaction = group.transactions[transactionIndex];
 
     return Scaffold(
       appBar: AppBar(
@@ -53,17 +25,7 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
           IconButton(
             icon: const Icon(Icons.delete),
             onPressed: () {
-              // Delete transaction
-              Provider.of<GroupProvider>(context, listen: false)
-                  .deleteTransaction(widget.groupName, widget.transactionIndex);
-              Navigator.pop(context); // Go back to Group Detail Page
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              // Navigate to the edit form
-              _showEditTransactionDialog(context, transaction);
+              _showDeleteConfirmationDialog(context);
             },
           ),
         ],
@@ -73,83 +35,74 @@ class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("Description: ${transaction.description}"),
-            Text("Amount: \$${transaction.amount.toStringAsFixed(2)}"),
-            Text("Date: ${transaction.date.toLocal().toString().split(' ')[0]}"),
-            // You can add more fields like participants and their amounts if needed
+            const Text("Description:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(transaction.description, style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 12),
+
+            const Text("Amount:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text("\$${transaction.amount.toStringAsFixed(2)}",
+                style: TextStyle(
+                    fontSize: 16,
+                    color: transaction.amount < 0 ? Colors.red : Colors.green)),
+            const SizedBox(height: 12),
+
+            const Text("Date:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            Text(transaction.date.toLocal().toString().split(' ')[0],
+                style: const TextStyle(fontSize: 16)),
+            const SizedBox(height: 20),
+
+            const Divider(),
+            const SizedBox(height: 10),
+
+            const Text("Participants & Contributions:",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+
+            // ✅ Use participantShares instead of participants
+            transaction.participantShares.isNotEmpty
+                ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: transaction.participantShares.entries
+                  .map((entry) => ListTile(
+                leading: const Icon(Icons.person),
+                title: Text(entry.key),
+                trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
+              ))
+                  .toList(),
+            )
+                : const Text(
+              "No participants added.",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // Show the dialog for editing the transaction
-  void _showEditTransactionDialog(BuildContext context, Transaction transaction) {
+  void _showDeleteConfirmationDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text("Edit Transaction"),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(labelText: 'Description'),
-                ),
-                TextField(
-                  controller: _amountController,
-                  keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Amount'),
-                ),
-                ListTile(
-                  title: const Text("Date of Transaction"),
-                  subtitle: Text("${_transactionDate.toLocal()}".split(' ')[0]),
-                  onTap: () async {
-                    DateTime? picked = await showDatePicker(
-                      context: context,
-                      initialDate: _transactionDate,
-                      firstDate: DateTime(2020),
-                      lastDate: DateTime(2100),
-                    );
-                    if (picked != null && picked != _transactionDate) {
-                      setState(() {
-                        _transactionDate = picked;
-                      });
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-          actions: <Widget>[
+          title: const Text("Delete Transaction"),
+          content: const Text("Are you sure you want to delete this transaction?"),
+          actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context); // Close the dialog without saving
-              },
+              onPressed: () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
-                final amount = double.tryParse(_amountController.text);
-                if (amount != null && _descriptionController.text.isNotEmpty) {
-                  // Update the transaction
-                  final updatedTransaction = Transaction(
-                    description: _descriptionController.text,
-                    amount: amount,
-                    date: _transactionDate,
-                    participants: transaction.participants, // Keep the same participants
-                  );
-
-                  // Update the transaction in the group provider
-                  Provider.of<GroupProvider>(context, listen: false)
-                      .updateTransaction(widget.groupName, widget.transactionIndex, updatedTransaction);
-
-                  Navigator.pop(context); // Close the dialog and return to the group page
-                }
+                Provider.of<GroupProvider>(context, listen: false)
+                    .deleteTransaction(groupName, transactionIndex);
+                Navigator.pop(context);
+                Navigator.pop(context);
               },
-              child: const Text("Save"),
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
             ),
           ],
         );
