@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../transactions/add_expense_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -89,25 +88,6 @@ class HomePage extends StatelessWidget {
               ),
 
               const SizedBox(height: 20),
-
-              // Action Buttons for Add Expense and View Reports
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ActionButton(
-                    label: 'Add Expense',
-                    icon: Icons.add,
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => const AddExpensePage()),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 16),
-                ],
-              ),
             ],
           ),
         ),

@@ -177,7 +177,7 @@ void main() {
     });
   });
 
-// Group tests for ProfilePage
+  // Group tests for ProfilePage
   group('ProfilePage Tests', () {
 
     // Test 1: Phone number visibility toggles when icon is pressed
@@ -290,43 +290,7 @@ void main() {
 
   });
 
-  // group('GroupsPage Tests', () {
-  //   testWidgets('Create Group dialog should show and create group successfully', (WidgetTester tester) async {
-  //     // Create a mock provider to simulate the GroupProvider
-  //     await tester.pumpWidget(
-  //       ChangeNotifierProvider(
-  //         create: (context) => GroupProvider(),
-  //         child: const MaterialApp(home: GroupsPage()),
-  //       ),
-  //     );
-  //
-  //     // Verify that initially, no groups are listed
-  //     expect(find.text('No groups available'), findsOneWidget);
-  //
-  //     // Tap on the FloatingActionButton to create a new group
-  //     await tester.tap(find.byIcon(Icons.add));
-  //     await tester.pumpAndSettle();
-  //
-  //     // Enter group name
-  //     await tester.enterText(find.byType(TextField), 'New Group');
-  //
-  //     // Add members by tapping the Add Members button
-  //     await tester.tap(find.byIcon(Icons.person_add));
-  //     await tester.pumpAndSettle();
-  //
-  //     // Select members and return to the GroupsPage
-  //     await tester.tap(find.text('Vamshi'));  // Example friend selection
-  //     await tester.pumpAndSettle();
-  //
-  //     // Tap on Create to finalize group creation
-  //     await tester.tap(find.byType(ElevatedButton));
-  //     await tester.pumpAndSettle();
-  //
-  //     // Verify that the group is created and appears in the list
-  //     expect(find.text('New Group'), findsOneWidget);
-  //   });
-  // });
-
+  // Group tests for Add Group Members Page
   group('AddGroupMembersPage Tests', () {
     testWidgets('Should display friend list and allow selection', (WidgetTester tester) async {
       // Initial list of preselected friends is empty
@@ -345,32 +309,89 @@ void main() {
       // Verify that the friend is selected
       expect(find.byType(CheckboxListTile), findsWidgets);
     });
+// Group tests for Add Group Members Page
+    group('AddGroupMembersPage Tests', () {
+      testWidgets('Should display friend list and allow selection', (WidgetTester tester) async {
+        // Initial list of preselected friends is empty
+        await tester.pumpWidget(const MaterialApp(
+          home: AddGroupMembersPage(preselectedFriends: []),
+        ));
 
-    // testWidgets('Should return selected friends when done', (WidgetTester tester) async {
-    //   // Initial list of preselected friends is empty
-    //   await tester.pumpWidget(const MaterialApp(
-    //     home: AddGroupMembersPage(preselectedFriends: []),
-    //   ));
-    //
-    //   // Select "Nandan" and "Karthik" as members
-    //   await tester.tap(find.byType(CheckboxListTile).first);
-    //   await tester.tap(find.byType(CheckboxListTile).at(1));
-    //   await tester.pumpAndSettle();
-    //
-    //   // Press the floating action button to return the selected friends
-    //   await tester.tap(find.byIcon(Icons.check));
-    //   await tester.pumpAndSettle();
-    //
-    //   // Verify that the returned list contains the selected members
-    //   final selectedFriends = find.text('Nandan');
-    //   expect(selectedFriends, findsOneWidget);
-    //
-    //   final selectedFriend2 = find.text('Karthik');
-    //   expect(selectedFriend2, findsOneWidget);
-    // });
+        // Verify that the list of friends is visible
+        expect(find.text('Vamshi'), findsOneWidget);
+        expect(find.text('Karthik'), findsOneWidget);
+
+        // Select a friend (for example, "Vamshi")
+        await tester.tap(find.byType(CheckboxListTile).first);
+        await tester.pumpAndSettle();
+
+        // Verify that the friend is selected
+        expect(find.byType(CheckboxListTile), findsWidgets);
+      });
+
+      // Group tests for Add Group Members Page
+      group('Add Group MembersPage Tests', () {
+        testWidgets('Should display friend list and allow selection', (WidgetTester tester) async {
+          // Initial list of preselected friends is empty
+          await tester.pumpWidget(const MaterialApp(
+            home: AddGroupMembersPage(preselectedFriends: []),
+          ));
+
+          // Verify that the list of friends is visible
+          expect(find.text('Vamshi'), findsOneWidget);
+          expect(find.text('Karthik'), findsOneWidget);
+
+          // Select a friend (for example, "Vamshi")
+          await tester.tap(find.byType(CheckboxListTile).first);
+          await tester.pumpAndSettle();
+
+          // Verify that the friend is selected
+          expect(find.byType(CheckboxListTile), findsWidgets);
+        });
+
+        testWidgets('Should allow creating a new group and redirect to group page', (WidgetTester tester) async {
+          // Simulate the AddGroupMembersPage with preselected friends
+          List<String> preselectedFriends = ['Vamshi', 'Karthik'];
+
+          // Create the widget to test
+          await tester.pumpWidget(MaterialApp(
+            home: AddGroupMembersPage(preselectedFriends: preselectedFriends),
+          ));
+
+          // Verify that the friends are listed
+          expect(find.text('Vamshi'), findsOneWidget);
+          expect(find.text('Karthik'), findsOneWidget);
+
+          // Select a friend (for example, "Karthik") to add to the group
+          await tester.tap(find.byType(CheckboxListTile).at(1)); // Select "Karthik"
+          await tester.pumpAndSettle();
+
+          // Ensure the UI has settled, especially if there are animations or state changes
+          await tester.pumpAndSettle();
+
+          // Check that the "Create" button exists before tapping it
+          expect(find.text('Create'), findsOneWidget);  // Expect the button with text 'Create'
+
+          // Tap on the "Create" button
+          await tester.tap(find.text('Create').first);  // Tapping the button with the name 'Create'
+          await tester.pumpAndSettle();
+
+          // Verify redirection to the Group Page
+          // Check for an element that identifies the Group Page after navigation (e.g., group name or some unique widget in the group page)
+          expect(find.text('Group Name'), findsOneWidget);  // Check for a widget that identifies the group page
+
+          // Optionally, verify that selected members are displayed in the group page
+          expect(find.text('Vamshi'), findsOneWidget);  // Check that the members selected are shown
+          expect(find.text('Karthik'), findsOneWidget);  // Check that the members selected are shown
+        });
+
+
+
+      });
+
+    });
+
   });
 
-
-  
 
 }

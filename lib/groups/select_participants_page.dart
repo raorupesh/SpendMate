@@ -8,7 +8,8 @@ class SelectParticipantsPage extends StatefulWidget {
       {super.key, required this.members, required this.selectedParticipants});
 
   @override
-  _SelectParticipantsPageState createState() => _SelectParticipantsPageState();
+  _SelectParticipantsPageState createState() =>
+      _SelectParticipantsPageState();
 }
 
 class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
@@ -18,7 +19,7 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
   void initState() {
     super.initState();
     selectedParticipants =
-        Set.from(widget.selectedParticipants); //Load selections
+        Set.from(widget.selectedParticipants); // Load selections
   }
 
   @override
@@ -33,7 +34,7 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
             Navigator.pop(
                 context,
                 selectedParticipants
-                    .toList()); //Pass updated selections back
+                    .toList()); // Pass updated selections back
           },
         ),
       ),
@@ -45,15 +46,25 @@ class _SelectParticipantsPageState extends State<SelectParticipantsPage> {
             onChanged: (bool? value) {
               setState(() {
                 if (value == true) {
-                  selectedParticipants
-                      .add(member); //Adds participant instantly
+                  selectedParticipants.add(member); // Adds participant instantly
                 } else {
-                  selectedParticipants.remove(member); //Removes instantly
+                  selectedParticipants.remove(member); // Removes instantly
                 }
               });
             },
           );
         }).toList(),
+      ),
+      // Floating action button to tick and go back
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pop(
+              context,
+              selectedParticipants
+                  .toList()); // Pass selected participants back to previous page
+        },
+        backgroundColor: Colors.teal,
+        child: const Icon(Icons.check), // Check mark icon
       ),
     );
   }
