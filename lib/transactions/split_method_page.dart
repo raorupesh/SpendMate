@@ -17,11 +17,18 @@ class _SplitMethodPageState extends State<SplitMethodPage> {
   String selectedMethod = "Equal";
 
   @override
+  void initState() {
+    super.initState();
+    selectedMethod = widget.splitMethod;
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-          title: const Text("Select Split Method"),
-          backgroundColor: Colors.teal),
+        title: const Text("Select Split Method"),
+        backgroundColor: Colors.teal,
+      ),
       body: Column(
         children: [
           ListTile(
