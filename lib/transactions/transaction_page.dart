@@ -17,7 +17,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   final _amountController = TextEditingController();
   DateTime _transactionDate = DateTime.now();
   String _splitMethod = "Equal";
-  String _payer = 'You';
+  //String _payer = '';
   List<String> _selectedFriends = [];
   Map<String, double> _participantShares = {};
 
@@ -159,28 +159,26 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   }
 
   Map<String, double> _calculateSplit(Map<String, dynamic> splitData) {
-    double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
-    Map<String, double> shares = {};
+  double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+  Map<String, double> shares = {};
 
-    if (splitData['method'] == "Equal") {
-      double splitAmount = totalAmount / (_selectedFriends.length + 1);
-      shares[_payer] = splitAmount;
-      for (var friend in _selectedFriends) {
-        shares[friend] = splitAmount;
-      }
-    } else if (splitData['method'] == "Custom") {
-      List<String> amounts = splitData['values'].split(',');
-      for (int i = 0; i < _selectedFriends.length; i++) {
-        shares[_selectedFriends[i]] = double.parse(amounts[i]);
-      }
-    } else if (splitData['method'] == "Percentage") {
-      List<String> percentages = splitData['values'].split(',');
-      for (int i = 0; i < _selectedFriends.length; i++) {
-        shares[_selectedFriends[i]] =
-            (double.parse(percentages[i]) / 100) * totalAmount;
-      }
+  if (splitData['method'] == "Equal") {
+    double splitAmount = totalAmount / _selectedFriends.length;
+    for (var friend in _selectedFriends) {
+      shares[friend] = splitAmount;
     }
-
-    return shares;
+  } else if (splitData['method'] == "Custom") {
+    List<String> amounts = splitData['values'].split(',');
+    for (int i = 0; i < _selectedFriends.length; i++) {
+      shares[_selectedFriends[i]] = double.parse(amounts[i]);
+    }
+  } else if (splitData['method'] == "Percentage") {
+    List<String> percentages = splitData['values'].split(',');
+    for (int i = 0; i < _selectedFriends.length; i++) {
+      shares[_selectedFriends[i]] =
+          (double.parse(percentages[i]) / 100) * totalAmount;
+    }
   }
+  return shares;
+}
 }

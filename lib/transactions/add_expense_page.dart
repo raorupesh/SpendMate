@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:spendmate/groups/select_participants_page.dart';
+import 'package:spendmate/transactions/split_method_page.dart';
 
 class AddExpensePage extends StatefulWidget {
   const AddExpensePage({super.key});
@@ -18,13 +19,21 @@ class _AddExpensePageState extends State<AddExpensePage> {
   Set<String> _selectedParticipants = {}; // Use Set to prevent duplicates
 
   bool isSaveEnabled = false;
+  String? _splitMethod;
+  Map<String, double> _participantShares = {};
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   void validateFields() {
     setState(() {
       final isExpenseNameValid = expenseNameController.text.isNotEmpty;
       final isAmountValid = amountController.text.isNotEmpty &&
           RegExp(r'^\d+(\.\d{0,2})?$').hasMatch(amountController.text);
-      isSaveEnabled = isExpenseNameValid && isAmountValid;
+      final isSplitMethodSelected = _splitMethod != null;
+      isSaveEnabled = isExpenseNameValid && isAmountValid && isSplitMethodSelected;
     });
   }
 
@@ -77,8 +86,35 @@ class _AddExpensePageState extends State<AddExpensePage> {
                   setState(() {
                     _selectedParticipants =
                         Set.from(selected); // Prevents duplicates
+                    // Recalculate split with the selected participants
+                    if (_splitMethod != null) {
+                      _participantShares = _calculateSplit({"method": _splitMethod});
+                    }
                   });
                 }
+              },
+            ),
+
+            const SizedBox(height: 16),
+            ListTile(
+              title: const Text("Split Method"),
+              subtitle: Text(_splitMethod ?? "Select split method"),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SplitMethodPage(
+                      splitMethod: _splitMethod ?? "Equal",
+                      onSave: (splitData) {
+                        setState(() {
+                          _splitMethod = splitData['method'];
+                          _participantShares = _calculateSplit(splitData);
+                          validateFields();
+                        });
+                      },
+                    ),
+                  ),
+                );
               },
             ),
 
@@ -96,5 +132,30 @@ class _AddExpensePageState extends State<AddExpensePage> {
         ),
       ),
     );
+  }
+
+  Map<String, double> _calculateSplit(Map<String, dynamic> splitData) {
+    double totalAmount = double.tryParse(amountController.text) ?? 0.0;
+    Map<String, double> shares = {};
+
+    if (splitData['method'] == "Equal") {
+      double splitAmount = totalAmount / _selectedParticipants.length;
+      for (var participant in _selectedParticipants) {
+        shares[participant] = splitAmount;
+      }
+    } else if (splitData['method'] == "Custom") {
+      List<String> amounts = splitData['values'].split(',');
+      for (int i = 0; i < _selectedParticipants.length; i++) {
+        shares[_selectedParticipants.elementAt(i)] = double.parse(amounts[i]);
+      }
+    } else if (splitData['method'] == "Percentage") {
+      List<String> percentages = splitData['values'].split(',');
+      for (int i = 0; i < _selectedParticipants.length; i++) {
+        shares[_selectedParticipants.elementAt(i)] =
+            (double.parse(percentages[i]) / 100) * totalAmount;
+      }
+    }
+
+    return shares;
   }
 }
