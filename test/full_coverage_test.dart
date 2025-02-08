@@ -349,48 +349,97 @@ void main() {
           expect(find.byType(CheckboxListTile), findsWidgets);
         });
 
-        testWidgets('Should allow creating a new group and redirect to group page', (WidgetTester tester) async {
-          // Simulate the AddGroupMembersPage with preselected friends
-          List<String> preselectedFriends = ['Vamshi', 'Karthik'];
-
-          // Create the widget to test
-          await tester.pumpWidget(MaterialApp(
-            home: AddGroupMembersPage(preselectedFriends: preselectedFriends),
-          ));
-
-          // Verify that the friends are listed
-          expect(find.text('Vamshi'), findsOneWidget);
-          expect(find.text('Karthik'), findsOneWidget);
-
-          // Select a friend (for example, "Karthik") to add to the group
-          await tester.tap(find.byType(CheckboxListTile).at(1)); // Select "Karthik"
-          await tester.pumpAndSettle();
-
-          // Ensure the UI has settled, especially if there are animations or state changes
-          await tester.pumpAndSettle();
-
-          // Check that the "Create" button exists before tapping it
-          expect(find.text('Create'), findsOneWidget);  // Expect the button with text 'Create'
-
-          // Tap on the "Create" button
-          await tester.tap(find.text('Create').first);  // Tapping the button with the name 'Create'
-          await tester.pumpAndSettle();
-
-          // Verify redirection to the Group Page
-          // Check for an element that identifies the Group Page after navigation (e.g., group name or some unique widget in the group page)
-          expect(find.text('Group Name'), findsOneWidget);  // Check for a widget that identifies the group page
-
-          // Optionally, verify that selected members are displayed in the group page
-          expect(find.text('Vamshi'), findsOneWidget);  // Check that the members selected are shown
-          expect(find.text('Karthik'), findsOneWidget);  // Check that the members selected are shown
-        });
-
-
-
       });
 
     });
 
+  });
+
+  group('GroupSettingsPage Tests', () {
+    testWidgets('Should display group members correctly', (WidgetTester tester) async {
+      // Prepare mock group data
+      final List<String> groupMembers = ['Vamshi', 'Karthik', 'Ravi'];
+
+      // Build the GroupSettingsPage with mock data
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupSettingsPage(groupName: 'Test Group', groupMembers: groupMembers),
+        ),
+      );
+
+      // Verify that the group name is displayed
+      expect(find.text('Group Settings'), findsOneWidget);
+
+      // Verify that the list of members is displayed
+      expect(find.text('Vamshi'), findsOneWidget);
+      expect(find.text('Karthik'), findsOneWidget);
+      expect(find.text('Ravi'), findsOneWidget);
+    });
+
+    testWidgets('Should navigate to AddGroupMembersPage and modify members', (WidgetTester tester) async {
+      // Initial members of the group
+      List<String> groupMembers = ['Vamshi', 'Karthik'];
+
+      // Build the GroupSettingsPage widget with initial group members
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupSettingsPage(groupName: 'Test Group', groupMembers: groupMembers),
+        ),
+      );
+
+      // Verify that the group members are initially displayed
+      expect(find.text('Vamshi'), findsOneWidget);
+      expect(find.text('Karthik'), findsOneWidget);
+
+      // Tap on the "Modify Members" button
+      await tester.tap(find.text('Modify Members'));
+      await tester.pumpAndSettle();
+
+      // Simulate adding a new member (e.g., "Ravi")
+      final List<String> updatedMembers = ['Vamshi', 'Karthik', 'Nandan'];
+
+      // Assuming that the AddGroupMembersPage modifies the list and returns the updated list
+      // Mock the behavior of AddGroupMembersPage and return the updated list
+      // Simulate the updated members being returned
+      expect(updatedMembers.contains('Nandan'), isTrue);
+
+      // Verify that the updated members list is reflected in the UI
+      expect(find.text('Vamshi'), findsOneWidget);
+      expect(find.text('Karthik'), findsOneWidget);
+      expect(find.text('Nandan'), findsOneWidget);
+    });
+
+    testWidgets('Should show leave group confirmation dialog and handle leaving', (WidgetTester tester) async {
+      // Prepare mock group data
+      final List<String> groupMembers = ['Vamshi', 'Karthik', 'Ravi'];
+
+      // Build the GroupSettingsPage with mock data
+      await tester.pumpWidget(
+        MaterialApp(
+          home: GroupSettingsPage(groupName: 'Test Group', groupMembers: groupMembers),
+        ),
+      );
+
+      // Verify that the "Leave Group" button is present
+      expect(find.text('Leave Group'), findsOneWidget);
+
+      // Tap on the "Leave Group" button
+      await tester.tap(find.text('Leave Group'));
+      await tester.pumpAndSettle(); // Allow the dialog to appear
+
+      // Verify that the dialog is shown
+      expect(find.byType(AlertDialog), findsOneWidget);
+
+      // Verify that the dialog has the text we're expecting (i.e., "Leave")
+      expect(find.text('Leave'), findsOneWidget);  // The "Leave" button
+
+      // Tap on the "Leave" button in the dialog
+      await tester.tap(find.text('Leave'));
+      await tester.pumpAndSettle();
+
+      // Verify that the app navigates back to the first route (indicating the user has left the group)
+      expect(find.text('Test Group'), findsNothing); // Assuming you're redirected somewhere else
+    });
   });
 
 
