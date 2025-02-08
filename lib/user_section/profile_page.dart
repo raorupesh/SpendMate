@@ -42,7 +42,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 4),
             const Text(
-              "John Doe",
+              "Spend Mate",
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 12),
@@ -53,7 +53,7 @@ class _ProfilePageState extends State<ProfilePage> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
-            const Text("johndoe@example.com", style: TextStyle(fontSize: 16)),
+            const Text("spendmate@example.com", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 12),
 
             // Phone Number with Eye Icon (Bold header)
