@@ -94,11 +94,17 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     builder: (context) => SplitMethodPage(
                       splitMethod: _splitMethod ?? "Equal",
                       onSave: (splitData) {
-                        setState(() {
-                          _splitMethod = splitData['method'];
-                          _participantShares = _calculateSplit(splitData);
-                          validateFields();
-                        });
+                        try {
+                          setState(() {
+                            _splitMethod = splitData['method'];
+                            _participantShares = _calculateSplit(splitData);
+                            validateFields();
+                          });
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
+                        }
                       },
                     ),
                   ),
