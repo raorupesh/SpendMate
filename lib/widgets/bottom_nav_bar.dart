@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:spendmate/groups/groups_page.dart';
 import 'package:spendmate/screens/home_page.dart';
+import 'package:spendmate/screens/chores_page.dart'; // Import the Chores Page
 import 'package:spendmate/user_section/profile_page.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -16,7 +17,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final List<Widget> _pages = [
     const HomePage(),
     const GroupsPage(),
-    const ProfilePage()
+    const ChoresPage(),  // Add Chores Page here
+    const ProfilePage(),
   ];
 
   void _onItemTapped(int index) {
@@ -28,27 +30,33 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 500),
+        child: _pages[_selectedIndex],
+      ),
       bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed, // To avoid shifting animation
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home), // Home Icon
+            icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.group), // Groups Icon
+            icon: Icon(Icons.group),
             label: 'Groups',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.task), // Chores Icon
+            icon: Icon(Icons.check_circle), // Chores Icon
             label: 'Chores',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
         currentIndex: _selectedIndex,
         selectedItemColor: Colors.teal,
-        // Color when selected
         unselectedItemColor: Colors.grey,
-        // Color when not selected (grey)
         onTap: _onItemTapped,
       ),
     );
