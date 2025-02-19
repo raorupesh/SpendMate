@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
 import 'package:spendmate/groups/group_details_page.dart';
-
 import 'package:spendmate/groups/add_group_members_page.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
+import '../lib/groups/groups_page.dart';
+import '../lib/screens/splash_screen.dart';
+import '../lib/widgets/bottom_nav_bar.dart';
+import 'package:fake_async/fake_async.dart';
 
 
 void main() {
@@ -439,6 +443,57 @@ void main() {
 
       // Verify that the app navigates back to the first route (indicating the user has left the group)
       expect(find.text('Test Group'), findsNothing); // Assuming you're redirected somewhere else
+    });
+  });
+
+  group('Splash Screen Tests', () {
+    testWidgets('Splash Screen should navigate to Login Page after delay', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
+
+      await tester.pump(const Duration(seconds: 5)); // Simulate splash delay
+      await tester.pumpAndSettle();
+
+      expect(find.byType(LoginPage), findsOneWidget);
+    });
+  });
+
+  group('Bottom Navigation Bar Tests', () {
+    testWidgets('Bottom Navigation Bar should switch tabs correctly', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => GroupProvider()),
+          ],
+          child: const MaterialApp(home: BottomNavBar()),
+        ),
+      );
+      await tester.pumpAndSettle(); // Ensure full rendering
+
+      // Verify HomePage is initially displayed
+      expect(find.byType(HomePage), findsOneWidget);
+
+
+      // Switch to Chores tab
+      await tester.tap(find.byIcon(Icons.check_circle));
+      await tester.pumpAndSettle();
+      expect(find.text('Chores Page Coming Soon...'), findsOneWidget);
+
+      // Switch to Profile tab
+      await tester.tap(find.byIcon(Icons.person));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProfilePage), findsOneWidget);
+    });
+  });
+
+  group('Groups Page Tests', () {
+    testWidgets('Groups Page should display groups list', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => GroupProvider(),
+          child: const MaterialApp(home: GroupsPage()),
+        ),
+      );
+      expect(find.text('Groups'), findsOneWidget);
     });
   });
 
