@@ -2,8 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/chores_provider.dart';
 
-class AssignChoresPage extends StatelessWidget {
+class AssignChoresPage extends StatefulWidget {
   const AssignChoresPage({super.key});
+
+  @override
+  _AssignChoresPageState createState() => _AssignChoresPageState();
+}
+
+class _AssignChoresPageState extends State<AssignChoresPage> {
+  final TextEditingController _participantCountController = TextEditingController();
+  final List<String> daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  final List<String> tasks = ["Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"];
+
+  Map<String, Map<String, String>> directAssignments = {}; // Store { Person -> { Day -> Task } }
 
   @override
   Widget build(BuildContext context) {
@@ -20,13 +31,20 @@ class AssignChoresPage extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
+              controller: _participantCountController,
               keyboardType: TextInputType.number,
               decoration: const InputDecoration(labelText: "Number of People"),
               onChanged: (value) {
                 int count = int.tryParse(value) ?? 0;
-                if (count > 0) choreProvider.setParticipantCount(count);
+                if (count > 0) {
+                  choreProvider.setParticipantCount(count);
+                  setState(() {
+                    directAssignments = {for (var person in choreProvider.participants) person: {}};
+                  });
+                }
               },
             ),
+
             const SizedBox(height: 16),
 
             DropdownButton<String>(
@@ -37,30 +55,38 @@ class AssignChoresPage extends StatelessWidget {
                   .map((method) => DropdownMenuItem(value: method, child: Text(method)))
                   .toList(),
               onChanged: (method) {
-                if (method != null) choreProvider.setAssignmentMethod(method);
+                if (method != null) {
+                  choreProvider.setAssignmentMethod(method);
+                  setState(() {}); // Refresh UI when selection changes
+                }
               },
             ),
+
             const SizedBox(height: 16),
 
-            if (choreProvider.assignmentMethod == "Enter Free Time")
-              Expanded(child: _buildFreeTimeTable(choreProvider)),
-
             if (choreProvider.assignmentMethod == "Direct Assign")
-              Expanded(child: _buildDirectAssignTable(context, choreProvider)),
+              Expanded(child: _buildDirectAssignTable(choreProvider)),
 
             if (choreProvider.showError)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Text(
-                  "Please fill in all details before generating the schedule.",
+                  "Please assign tasks for all days before generating the schedule.",
                   style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
                 ),
               ),
 
+            const SizedBox(height: 20),
+
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  if (choreProvider.validateInputs()) {
+                  if (directAssignments.values.any((dayMap) => dayMap.isEmpty)) {
+                    setState(() {
+                      choreProvider.showError = true;
+                    });
+                  } else {
+                    choreProvider.setDirectAssignments(directAssignments);
                     choreProvider.generateSchedule();
                     Navigator.pop(context);
                   }
@@ -74,47 +100,41 @@ class AssignChoresPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFreeTimeTable(ChoreProvider choreProvider) {
-    return ListView(
-      children: choreProvider.participants.expand((person) {
-        return choreProvider.daysOfWeek.map((day) {
-          return ListTile(
-            title: Text("$person - $day"),
-            trailing: DropdownButton<String>(
-              hint: const Text("Select Free Time"),
-              value: choreProvider.freeTime[person]![day],
-              items: ["Morning", "Afternoon", "Evening", "Night"]
-                  .map((time) => DropdownMenuItem(value: time, child: Text(time)))
-                  .toList(),
-              onChanged: (time) {
-                if (time != null) choreProvider.setFreeTime(person, day, time);
-              },
-            ),
-          );
-        }).toList();
-      }).toList(),
-    );
-  }
+  Widget _buildDirectAssignTable(ChoreProvider choreProvider) {
+    return ListView.builder(
+      itemCount: choreProvider.participants.length,
+      itemBuilder: (context, index) {
+        String person = choreProvider.participants[index];
 
-  Widget _buildDirectAssignTable(BuildContext context, ChoreProvider choreProvider) {
-    return ListView(
-      children: choreProvider.participants.expand((person) {
-        return choreProvider.daysOfWeek.map((day) {
-          return ListTile(
-            title: Text("$person - $day"),
-            trailing: DropdownButton<String>(
-              hint: const Text("Assign Task"),
-              value: choreProvider.assignedTasks[person]![day],
-              items: ["Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"]
-                  .map((task) => DropdownMenuItem(value: task, child: Text(task)))
-                  .toList(),
-              onChanged: (task) {
-                if (task != null) choreProvider.assignTaskDirectly(person, day, task);
-              },
-            ),
-          );
-        }).toList();
-      }).toList(),
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          child: ExpansionTile(
+            title: Text(person, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            children: daysOfWeek.map((day) {
+              return ListTile(
+                title: Text("$day"),
+                trailing: DropdownButton<String>(
+                  hint: const Text("Assign Task"),
+                  value: directAssignments[person]?[day],
+                  items: tasks.map((task) {
+                    return DropdownMenuItem(
+                      value: task,
+                      child: Text(task),
+                    );
+                  }).toList(),
+                  onChanged: (task) {
+                    setState(() {
+                      if (task != null) {
+                        directAssignments[person]![day] = task;
+                      }
+                    });
+                  },
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 }
