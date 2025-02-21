@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:spendmate/chores/chores_details_page.dart';
 import 'package:spendmate/groups/groups_page.dart';
-import 'package:spendmate/screens/home_page.dart';
-import 'package:spendmate/screens/chores_page.dart'; // Import the Chores Page
+import 'package:spendmate/screens/home_page.dart'; // Import the Chores Page
 import 'package:spendmate/user_section/profile_page.dart';
 
 class BottomNavBar extends StatefulWidget {
@@ -17,7 +17,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
   final List<Widget> _pages = [
     const HomePage(),
     const GroupsPage(),
-    const ChoresPage(),  // Add Chores Page here
+    const ChoresPage(),
     const ProfilePage(),
   ];
 
@@ -35,7 +35,8 @@ class _BottomNavBarState extends State<BottomNavBar> {
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed, // To avoid shifting animation
+        type: BottomNavigationBarType.fixed,
+        // To avoid shifting animation
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),

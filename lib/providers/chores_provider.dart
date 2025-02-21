@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class ChoreProvider with ChangeNotifier {
   int participantCount = 0;
   List<String> participants = [];
-  Map<String, String> assignedTasks = {};
-  Map<String, String> freeTime = {};
-  Map<String, String> finalSchedule = {};
+  Map<String, Map<String, String>> assignedTasks = {}; // person -> day -> task
+  Map<String, Map<String, String>> freeTime = {}; // person -> day -> free time
+  Map<String, Map<String, String>> finalSchedule = {}; // person -> day -> assigned task
   bool showGenerateButton = false;
   bool showError = false;
   String assignmentMethod = "";
+
+  final List<String> daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 
   void setParticipantCount(int count) {
     participantCount = count;
@@ -16,34 +18,38 @@ class ChoreProvider with ChangeNotifier {
     assignedTasks.clear();
     freeTime.clear();
     finalSchedule.clear();
+    for (var person in participants) {
+      assignedTasks[person] = {};
+      freeTime[person] = {};
+      finalSchedule[person] = {};
+    }
     showGenerateButton = false;
     notifyListeners();
   }
 
   void setAssignmentMethod(String method) {
     assignmentMethod = method;
-    showGenerateButton = false; // Reset the button visibility
+    showGenerateButton = false;
     showError = false;
     notifyListeners();
   }
 
-  void setFreeTime(String person, String time) {
-    freeTime[person] = time;
+  void setFreeTime(String person, String day, String time) {
+    freeTime[person]![day] = time;
     checkIfReady();
     notifyListeners();
   }
 
-  void assignTaskDirectly(String person, String task) {
-    assignedTasks[person] = task;
+  void assignTaskDirectly(String person, String day, String task) {
+    assignedTasks[person]![day] = task;
     checkIfReady();
     notifyListeners();
   }
 
   void checkIfReady() {
-    // Check if all tasks or free times are filled
     bool allAssigned = assignmentMethod == "Enter Free Time"
-        ? participants.every((p) => freeTime.containsKey(p) && freeTime[p]!.isNotEmpty)
-        : participants.every((p) => assignedTasks.containsKey(p) && assignedTasks[p]!.isNotEmpty);
+        ? participants.every((p) => daysOfWeek.every((day) => freeTime[p]![day] != null && freeTime[p]![day]!.isNotEmpty))
+        : participants.every((p) => daysOfWeek.every((day) => assignedTasks[p]![day] != null && assignedTasks[p]![day]!.isNotEmpty));
 
     showGenerateButton = allAssigned;
     showError = !allAssigned;
@@ -51,7 +57,6 @@ class ChoreProvider with ChangeNotifier {
   }
 
   bool validateInputs() {
-    // Ensure all inputs are filled before generating schedule
     bool valid = showGenerateButton;
     showError = !valid;
     notifyListeners();
@@ -60,18 +65,13 @@ class ChoreProvider with ChangeNotifier {
 
   void generateSchedule() {
     finalSchedule.clear();
-
-    if (assignmentMethod == "Enter Free Time") {
-      List<String> tasks = ["Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"];
-      int i = 0;
-      freeTime.forEach((person, time) {
-        finalSchedule[person] = tasks[i % tasks.length];
-        i++;
-      });
-    } else {
-      finalSchedule.addAll(assignedTasks);
+    for (var person in participants) {
+      for (var day in daysOfWeek) {
+        finalSchedule[person]![day] = assignmentMethod == "Enter Free Time"
+            ? "Task based on ${freeTime[person]![day]}"
+            : assignedTasks[person]![day] ?? "Not Assigned";
+      }
     }
-
     notifyListeners();
   }
 }
