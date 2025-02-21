@@ -1,20 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:spendmate/chores/chores_details_page.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
 import 'package:spendmate/groups/group_details_page.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
+import 'package:spendmate/providers/chores_provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
-
 import '../lib/groups/groups_page.dart';
 import '../lib/screens/splash_screen.dart';
+import '../lib/transactions/transaction_details_page.dart';
 import '../lib/widgets/bottom_nav_bar.dart';
+import 'package:spendmate/chores/assign_chores_page.dart';
 
 void main() {
+
+  testWidgets('TransactionDetailsPage UI and Delete Functionality', (WidgetTester tester) async {
+    final groupProvider = GroupProvider();
+    groupProvider.addGroup(Group(name: "Test Group", members: ["Alice", "Bob"]));
+    groupProvider.addTransaction(
+      "Test Group",
+      Transaction(
+        description: "Dinner",
+        amount: 50.0,
+        date: DateTime.now(),
+        participantShares: {"Alice": 25.0, "Bob": 25.0},
+      ),
+    );
+
+    await tester.pumpWidget(
+      ChangeNotifierProvider.value(
+        value: groupProvider,
+        child: const MaterialApp(home: TransactionDetailsPage(groupName: "Test Group", transactionIndex: 0)),
+      ),
+    );
+
+    // Verify transaction details
+    expect(find.text("Description:"), findsOneWidget);
+    expect(find.text("Dinner"), findsOneWidget);
+    expect(find.text("Amount:"), findsOneWidget);
+    expect(find.text("\$50.00"), findsOneWidget);
+
+    // Tap Delete Button
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pumpAndSettle();
+
+    // Verify confirmation dialog appears
+    expect(find.text("Delete Transaction"), findsOneWidget);
+  });
   // Group tests for LoginPage
   group('LoginPage Tests', () {
     testWidgets(
@@ -497,12 +534,12 @@ void main() {
   });
 
   group('Bottom Navigation Bar Tests', () {
-    testWidgets('Bottom Navigation Bar should switch tabs correctly',
-        (WidgetTester tester) async {
+    testWidgets('Bottom Navigation Bar should switch tabs correctly', (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => GroupProvider()),
+            ChangeNotifierProvider(create: (_) => ChoreProvider()),
           ],
           child: const MaterialApp(home: BottomNavBar()),
         ),
@@ -515,12 +552,17 @@ void main() {
       // Switch to Chores tab
       await tester.tap(find.byIcon(Icons.check_circle));
       await tester.pumpAndSettle();
-      expect(find.text('Chores Page Coming Soon...'), findsOneWidget);
+      expect(find.byType(ChoresDetailsPage), findsOneWidget);
 
       // Switch to Profile tab
       await tester.tap(find.byIcon(Icons.person));
       await tester.pumpAndSettle();
       expect(find.byType(ProfilePage), findsOneWidget);
+
+      // Switch back to Home tab
+      await tester.tap(find.byIcon(Icons.home));
+      await tester.pumpAndSettle();
+      expect(find.byType(HomePage), findsOneWidget);
     });
   });
 
@@ -534,6 +576,93 @@ void main() {
         ),
       );
       expect(find.text('Groups'), findsOneWidget);
+    });
+  });
+
+  group('Chores Tests', () {
+    testWidgets('Verify UI elements in AssignChoresPage', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (context) => ChoreProvider()),
+          ],
+          child: const MaterialApp(home: AssignChoresPage()),
+        ),
+      );
+
+      // Verify if page title exists
+      expect(find.text('Assign Weekly Chores'), findsOneWidget);
+
+      // Verify TextField for participant count exists
+      expect(find.byType(TextField), findsOneWidget);
+      expect(find.text('Number of People'), findsOneWidget);
+
+      // Verify dropdown for assignment method
+      expect(find.text('Select Assignment Method'), findsOneWidget);
+
+      // Verify Generate Schedule button exists
+      expect(find.text('Generate Schedule'), findsOneWidget);
+    });
+
+    test('ChoreProvider updates participant count correctly', () {
+      final choreProvider = ChoreProvider();
+
+      // Initially, participants list should be empty
+      expect(choreProvider.participants.isEmpty, true);
+
+      // Set participant count
+      choreProvider.setParticipantCount(3);
+      expect(choreProvider.participants.length, 3);
+      expect(choreProvider.participants, ['Person 1', 'Person 2', 'Person 3']);
+    });
+
+    test('ChoreProvider assignment method updates correctly', () {
+      final choreProvider = ChoreProvider();
+
+      expect(choreProvider.assignmentMethod, "");
+
+      choreProvider.setAssignmentMethod("Direct Assign");
+      expect(choreProvider.assignmentMethod, "Direct Assign");
+    });
+
+    test('ChoreProvider correctly validates inputs', () {
+      final choreProvider = ChoreProvider();
+
+      // Initially, validation should fail
+      expect(choreProvider.validateInputs(), false);
+      expect(choreProvider.showError, true);
+
+      // Set valid data
+      choreProvider.setParticipantCount(2);
+      choreProvider.setAssignmentMethod("Direct Assign");
+      choreProvider.setDirectAssignments({
+        "Person 1": {"Monday": "Cleaning"},
+        "Person 2": {"Tuesday": "Dishes"}
+      });
+
+      expect(choreProvider.validateInputs(), true);
+      expect(choreProvider.showError, false);
+    });
+
+    testWidgets('ChoresDetailsPage UI and Navigation', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => ChoreProvider(),
+          child: const MaterialApp(home: ChoresDetailsPage()),
+        ),
+      );
+
+      // Verify title exists
+      expect(find.text("Chores Schedule"), findsOneWidget);
+
+      // Verify empty state message
+      expect(find.text("No schedule generated for this month."), findsOneWidget);
+
+      // Tap the FAB and navigate to AssignChoresPage
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AssignChoresPage), findsOneWidget);
     });
   });
 }
