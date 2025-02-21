@@ -1,89 +1,96 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:provider/provider.dart';
+import 'package:spendmate/groups/add_group_members_page.dart';
+import 'package:spendmate/groups/group_details_page.dart';
+import 'package:spendmate/groups/group_settings_page.dart';
+import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
-import 'package:spendmate/groups/group_details_page.dart';
-import 'package:spendmate/groups/add_group_members_page.dart';
-import 'package:spendmate/groups/group_settings_page.dart';
-import 'package:provider/provider.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
+
 import '../lib/groups/groups_page.dart';
 import '../lib/screens/splash_screen.dart';
 import '../lib/widgets/bottom_nav_bar.dart';
-import 'package:fake_async/fake_async.dart';
-
 
 void main() {
   // Group tests for LoginPage
   group('LoginPage Tests', () {
-    testWidgets('Login button should be disabled initially and enabled with valid input',
-            (WidgetTester tester) async {
-          // Build the LoginPage widget and trigger a frame
-          await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    testWidgets(
+        'Login button should be disabled initially and enabled with valid input',
+        (WidgetTester tester) async {
+      // Build the LoginPage widget and trigger a frame
+      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
 
-          // Verify the login button is disabled initially
-          final loginButton = find.byType(ElevatedButton);
-          expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
+      // Verify the login button is disabled initially
+      final loginButton = find.byType(ElevatedButton);
+      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
 
-          // Enter valid email and password
-          await tester.enterText(find.byType(TextField).at(0), 'test@example.com'); // Email
-          await tester.enterText(find.byType(TextField).at(1), 'password123'); // Password
+      // Enter valid email and password
+      await tester.enterText(
+          find.byType(TextField).at(0), 'test@example.com'); // Email
+      await tester.enterText(
+          find.byType(TextField).at(1), 'password123'); // Password
 
-          // Trigger a frame after entering text
-          await tester.pump();
+      // Trigger a frame after entering text
+      await tester.pump();
 
-          // Verify the login button is now enabled
-          expect(tester.widget<ElevatedButton>(loginButton).enabled, true);
+      // Verify the login button is now enabled
+      expect(tester.widget<ElevatedButton>(loginButton).enabled, true);
 
-          // Now, enter invalid email and password (empty password)
-          await tester.enterText(find.byType(TextField).at(1), ''); // Password empty
-          await tester.pump();
+      // Now, enter invalid email and password (empty password)
+      await tester.enterText(
+          find.byType(TextField).at(1), ''); // Password empty
+      await tester.pump();
 
-          // Verify the login button is still disabled
-          expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
-        });
+      // Verify the login button is still disabled
+      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
+    });
 
-    testWidgets('Login button should toggle (disable/enable) based on password input',
-            (WidgetTester tester) async {
-          // Build the LoginPage widget and trigger a frame
-          await tester.pumpWidget(const MaterialApp(home: LoginPage()));
+    testWidgets(
+        'Login button should toggle (disable/enable) based on password input',
+        (WidgetTester tester) async {
+      // Build the LoginPage widget and trigger a frame
+      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
 
-          // Find the TextField widgets for email and password
-          final emailField = find.byType(TextField).at(0); // First TextField is email
-          final passwordField = find.byType(TextField).at(1); // Second TextField is password
+      // Find the TextField widgets for email and password
+      final emailField =
+          find.byType(TextField).at(0); // First TextField is email
+      final passwordField =
+          find.byType(TextField).at(1); // Second TextField is password
 
-          // Find the Login button
-          final loginButton = find.byType(ElevatedButton);
+      // Find the Login button
+      final loginButton = find.byType(ElevatedButton);
 
-          // Initially, verify that the login button is disabled
-          expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
+      // Initially, verify that the login button is disabled
+      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
 
-          // Enter valid email and password
-          await tester.enterText(emailField, 'test@example.com'); // Email
-          await tester.enterText(passwordField, 'password123'); // Password
+      // Enter valid email and password
+      await tester.enterText(emailField, 'test@example.com'); // Email
+      await tester.enterText(passwordField, 'password123'); // Password
 
-          // Trigger a frame to rebuild the widget after entering text
-          await tester.pump();
+      // Trigger a frame to rebuild the widget after entering text
+      await tester.pump();
 
-          // Verify that the login button is now enabled
-          expect(tester.widget<ElevatedButton>(loginButton).enabled, true);
+      // Verify that the login button is now enabled
+      expect(tester.widget<ElevatedButton>(loginButton).enabled, true);
 
-          // Now, leave the password field empty and verify that the login button is disabled again
-          await tester.enterText(passwordField, ''); // Empty password
-          await tester.pump();
+      // Now, leave the password field empty and verify that the login button is disabled again
+      await tester.enterText(passwordField, ''); // Empty password
+      await tester.pump();
 
-          // Verify that the login button is still disabled
-          expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
-        });
+      // Verify that the login button is still disabled
+      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
+    });
   });
 
   // Group tests for SignUpPage
   group('SignUpPage Tests', () {
     test('Full Name Validation - should return error when empty', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.fullNameController.text = '';
       expect(state.validateFullName(), false);
@@ -92,7 +99,8 @@ void main() {
 
     test('Full Name Validation - should pass when not empty', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.fullNameController.text = 'John Doe';
       expect(state.validateFullName(), true);
@@ -101,7 +109,8 @@ void main() {
 
     test('Email Validation - should return error when empty', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.emailController.text = '';
       expect(state.validateEmail(), false);
@@ -110,7 +119,8 @@ void main() {
 
     test('Email Validation - should return error for invalid email', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.emailController.text = 'invalid-email';
       expect(state.validateEmail(), false);
@@ -119,7 +129,8 @@ void main() {
 
     test('Email Validation - should pass for valid email', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.emailController.text = 'test@example.com';
       expect(state.validateEmail(), true);
@@ -128,7 +139,8 @@ void main() {
 
     test('Password Validation - should return error when empty', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.passwordController.text = '';
       expect(state.validatePassword(), false);
@@ -137,16 +149,19 @@ void main() {
 
     test('Password Validation - should return error for short password', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.passwordController.text = '12345';
       expect(state.validatePassword(), false);
-      expect(state.passwordErrorMessage, 'Password must be at least 6 characters.');
+      expect(state.passwordErrorMessage,
+          'Password must be at least 6 characters.');
     });
 
     test('Password Validation - should pass for valid password', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.passwordController.text = 'password123';
       expect(state.validatePassword(), true);
@@ -155,7 +170,8 @@ void main() {
 
     test('Phone Validation - should return error when empty', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.phoneController.text = '';
       expect(state.validatePhoneNumber(), false);
@@ -164,16 +180,19 @@ void main() {
 
     test('Phone Validation - should return error for non-numeric input', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.phoneController.text = 'abc123';
       expect(state.validatePhoneNumber(), false);
-      expect(state.phoneErrorMessage, 'Phone number must contain only numbers.');
+      expect(
+          state.phoneErrorMessage, 'Phone number must contain only numbers.');
     });
 
     test('Phone Validation - should pass for valid phone number', () {
       final signUpPage = SignUpPage();
-      final state = signUpPage.createState(); // Create the state from SignUpPage
+      final state =
+          signUpPage.createState(); // Create the state from SignUpPage
 
       state.phoneController.text = '1234567890';
       expect(state.validatePhoneNumber(), true);
@@ -183,9 +202,9 @@ void main() {
 
   // Group tests for ProfilePage
   group('ProfilePage Tests', () {
-
     // Test 1: Phone number visibility toggles when icon is pressed
-    testWidgets('Phone number visibility toggles when icon is pressed', (WidgetTester tester) async {
+    testWidgets('Phone number visibility toggles when icon is pressed',
+        (WidgetTester tester) async {
       // Build the ProfilePage widget
       await tester.pumpWidget(MaterialApp(home: ProfilePage()));
 
@@ -210,7 +229,8 @@ void main() {
       expect(find.text('+1 234 567 890'), findsNothing);
     });
     // Test 2: Currency selection from dropdown
-    testWidgets('Currency selection from dropdown', (WidgetTester tester) async {
+    testWidgets('Currency selection from dropdown',
+        (WidgetTester tester) async {
       // Build the ProfilePage widget
       await tester.pumpWidget(MaterialApp(home: ProfilePage()));
 
@@ -219,20 +239,25 @@ void main() {
       await tester.pumpAndSettle();
 
       // Select a currency (for example, "USD")
-      await tester.tap(find.text('INR').last);  // Use .last in case there are multiple 'USD' options
+      await tester.tap(find
+          .text('INR')
+          .last); // Use .last in case there are multiple 'USD' options
       await tester.pumpAndSettle();
 
       // Verify that the selected currency is displayed
-      expect(find.text('INR'), findsOneWidget); // Assuming the dropdown displays the selected value
+      expect(find.text('INR'),
+          findsOneWidget); // Assuming the dropdown displays the selected value
     });
     group('GroupSettingsPage Tests', () {
-      testWidgets('Should display members and allow modification', (WidgetTester tester) async {
+      testWidgets('Should display members and allow modification',
+          (WidgetTester tester) async {
         // List of initial group members
         final members = ['Vamshi', 'Karthik', 'Nandan'];
 
         // Initialize GroupSettingsPage with the list of members
         await tester.pumpWidget(MaterialApp(
-          home: GroupSettingsPage(groupName: 'New Group', groupMembers: members),
+          home:
+              GroupSettingsPage(groupName: 'New Group', groupMembers: members),
         ));
 
         // Verify that all members are listed
@@ -252,13 +277,15 @@ void main() {
         expect(find.text('Moin'), findsOneWidget);
       });
 
-      testWidgets('Should prompt to confirm leaving the group', (WidgetTester tester) async {
+      testWidgets('Should prompt to confirm leaving the group',
+          (WidgetTester tester) async {
         // List of initial group members
         final members = ['Vamshi', 'Karthik', 'Nandan'];
 
         // Initialize GroupSettingsPage with the list of members
         await tester.pumpWidget(MaterialApp(
-          home: GroupSettingsPage(groupName: 'New Group', groupMembers: members),
+          home:
+              GroupSettingsPage(groupName: 'New Group', groupMembers: members),
         ));
 
         // Tap to leave the group
@@ -266,15 +293,19 @@ void main() {
         await tester.pumpAndSettle();
 
         // Verify that the confirmation dialog is shown
-        expect(find.text('Are you sure you want to leave this group?'), findsOneWidget);
+        expect(find.text('Are you sure you want to leave this group?'),
+            findsOneWidget);
       });
     });
 
     group('GroupDetailPage Tests', () {
-      testWidgets('Should show the Group Settings page when settings icon is tapped', (WidgetTester tester) async {
+      testWidgets(
+          'Should show the Group Settings page when settings icon is tapped',
+          (WidgetTester tester) async {
         // Simulate a group with no transactions
         final groupProvider = GroupProvider();
-        groupProvider.addGroup(Group(name: 'New Group', members: ['Vamshi'], transactions: []));
+        groupProvider.addGroup(
+            Group(name: 'New Group', members: ['Vamshi'], transactions: []));
 
         await tester.pumpWidget(
           ChangeNotifierProvider(
@@ -291,12 +322,12 @@ void main() {
         expect(find.text('Group Settings'), findsOneWidget);
       });
     });
-
   });
 
   // Group tests for Add Group Members Page
   group('AddGroupMembersPage Tests', () {
-    testWidgets('Should display friend list and allow selection', (WidgetTester tester) async {
+    testWidgets('Should display friend list and allow selection',
+        (WidgetTester tester) async {
       // Initial list of preselected friends is empty
       await tester.pumpWidget(const MaterialApp(
         home: AddGroupMembersPage(preselectedFriends: []),
@@ -315,7 +346,8 @@ void main() {
     });
 // Group tests for Add Group Members Page
     group('AddGroupMembersPage Tests', () {
-      testWidgets('Should display friend list and allow selection', (WidgetTester tester) async {
+      testWidgets('Should display friend list and allow selection',
+          (WidgetTester tester) async {
         // Initial list of preselected friends is empty
         await tester.pumpWidget(const MaterialApp(
           home: AddGroupMembersPage(preselectedFriends: []),
@@ -335,7 +367,8 @@ void main() {
 
       // Group tests for Add Group Members Page
       group('Add Group MembersPage Tests', () {
-        testWidgets('Should display friend list and allow selection', (WidgetTester tester) async {
+        testWidgets('Should display friend list and allow selection',
+            (WidgetTester tester) async {
           // Initial list of preselected friends is empty
           await tester.pumpWidget(const MaterialApp(
             home: AddGroupMembersPage(preselectedFriends: []),
@@ -352,22 +385,21 @@ void main() {
           // Verify that the friend is selected
           expect(find.byType(CheckboxListTile), findsWidgets);
         });
-
       });
-
     });
-
   });
 
   group('GroupSettingsPage Tests', () {
-    testWidgets('Should display group members correctly', (WidgetTester tester) async {
+    testWidgets('Should display group members correctly',
+        (WidgetTester tester) async {
       // Prepare mock group data
       final List<String> groupMembers = ['Vamshi', 'Karthik', 'Ravi'];
 
       // Build the GroupSettingsPage with mock data
       await tester.pumpWidget(
         MaterialApp(
-          home: GroupSettingsPage(groupName: 'Test Group', groupMembers: groupMembers),
+          home: GroupSettingsPage(
+              groupName: 'Test Group', groupMembers: groupMembers),
         ),
       );
 
@@ -380,14 +412,16 @@ void main() {
       expect(find.text('Ravi'), findsOneWidget);
     });
 
-    testWidgets('Should navigate to AddGroupMembersPage and modify members', (WidgetTester tester) async {
+    testWidgets('Should navigate to AddGroupMembersPage and modify members',
+        (WidgetTester tester) async {
       // Initial members of the group
       List<String> groupMembers = ['Vamshi', 'Karthik'];
 
       // Build the GroupSettingsPage widget with initial group members
       await tester.pumpWidget(
         MaterialApp(
-          home: GroupSettingsPage(groupName: 'Test Group', groupMembers: groupMembers),
+          home: GroupSettingsPage(
+              groupName: 'Test Group', groupMembers: groupMembers),
         ),
       );
 
@@ -413,14 +447,17 @@ void main() {
       expect(find.text('Nandan'), findsOneWidget);
     });
 
-    testWidgets('Should show leave group confirmation dialog and handle leaving', (WidgetTester tester) async {
+    testWidgets(
+        'Should show leave group confirmation dialog and handle leaving',
+        (WidgetTester tester) async {
       // Prepare mock group data
       final List<String> groupMembers = ['Vamshi', 'Karthik', 'Ravi'];
 
       // Build the GroupSettingsPage with mock data
       await tester.pumpWidget(
         MaterialApp(
-          home: GroupSettingsPage(groupName: 'Test Group', groupMembers: groupMembers),
+          home: GroupSettingsPage(
+              groupName: 'Test Group', groupMembers: groupMembers),
         ),
       );
 
@@ -435,19 +472,21 @@ void main() {
       expect(find.byType(AlertDialog), findsOneWidget);
 
       // Verify that the dialog has the text we're expecting (i.e., "Leave")
-      expect(find.text('Leave'), findsOneWidget);  // The "Leave" button
+      expect(find.text('Leave'), findsOneWidget); // The "Leave" button
 
       // Tap on the "Leave" button in the dialog
       await tester.tap(find.text('Leave'));
       await tester.pumpAndSettle();
 
       // Verify that the app navigates back to the first route (indicating the user has left the group)
-      expect(find.text('Test Group'), findsNothing); // Assuming you're redirected somewhere else
+      expect(find.text('Test Group'),
+          findsNothing); // Assuming you're redirected somewhere else
     });
   });
 
   group('Splash Screen Tests', () {
-    testWidgets('Splash Screen should navigate to Login Page after delay', (WidgetTester tester) async {
+    testWidgets('Splash Screen should navigate to Login Page after delay',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
 
       await tester.pump(const Duration(seconds: 5)); // Simulate splash delay
@@ -458,7 +497,8 @@ void main() {
   });
 
   group('Bottom Navigation Bar Tests', () {
-    testWidgets('Bottom Navigation Bar should switch tabs correctly', (WidgetTester tester) async {
+    testWidgets('Bottom Navigation Bar should switch tabs correctly',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -471,7 +511,6 @@ void main() {
 
       // Verify HomePage is initially displayed
       expect(find.byType(HomePage), findsOneWidget);
-
 
       // Switch to Chores tab
       await tester.tap(find.byIcon(Icons.check_circle));
@@ -486,7 +525,8 @@ void main() {
   });
 
   group('Groups Page Tests', () {
-    testWidgets('Groups Page should display groups list', (WidgetTester tester) async {
+    testWidgets('Groups Page should display groups list',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ChangeNotifierProvider(
           create: (_) => GroupProvider(),
@@ -496,6 +536,4 @@ void main() {
       expect(find.text('Groups'), findsOneWidget);
     });
   });
-
-
 }

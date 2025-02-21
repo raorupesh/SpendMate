@@ -5,7 +5,8 @@ class GroupSettingsPage extends StatefulWidget {
   final String groupName;
   final List<String> groupMembers;
 
-  const GroupSettingsPage({super.key, required this.groupName, required this.groupMembers});
+  const GroupSettingsPage(
+      {super.key, required this.groupName, required this.groupMembers});
 
   @override
   _GroupSettingsPageState createState() => _GroupSettingsPageState();
@@ -53,7 +54,8 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.teal,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
                 onPressed: () async {
                   final updatedMembers = await Navigator.push(
@@ -68,7 +70,8 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
                     setState(() {
                       groupMembers = updatedMembers;
                     });
-                    Navigator.pop(context, updatedMembers); // Pass updated members back
+                    Navigator.pop(
+                        context, updatedMembers); // Pass updated members back
                   }
                 },
                 child: const Text("Modify Members"),
@@ -79,7 +82,8 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.redAccent,
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 ),
                 onPressed: () {
                   _showLeaveGroupDialog(context);

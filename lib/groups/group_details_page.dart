@@ -20,13 +20,15 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
   @override
   void initState() {
     super.initState();
-    final group = Provider.of<GroupProvider>(context, listen: false).getGroup(widget.groupName);
+    final group = Provider.of<GroupProvider>(context, listen: false)
+        .getGroup(widget.groupName);
     groupMembers = group.members;
   }
 
   @override
   Widget build(BuildContext context) {
-    final group = Provider.of<GroupProvider>(context).getGroup(widget.groupName);
+    final group =
+        Provider.of<GroupProvider>(context).getGroup(widget.groupName);
 
     return Scaffold(
       appBar: AppBar(
@@ -75,7 +77,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                         MaterialPageRoute(
                           builder: (context) => TransactionDetailsPage(
                             groupName: group.name,
-                            transactionIndex: index, // Pass transaction index correctly
+                            transactionIndex:
+                                index, // Pass transaction index correctly
                           ),
                         ),
                       );
@@ -91,7 +94,8 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddTransactionPage(groupName: widget.groupName),
+              builder: (context) =>
+                  AddTransactionPage(groupName: widget.groupName),
             ),
           );
         },

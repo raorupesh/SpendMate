@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:spendmate/groups/select_participants_page.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/transactions/split_method_page.dart';
-import 'package:spendmate/groups/select_participants_page.dart';
 
 class AddTransactionPage extends StatefulWidget {
   final String groupName;
@@ -25,7 +25,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final group = Provider.of<GroupProvider>(context).getGroup(widget.groupName);
+    final group =
+        Provider.of<GroupProvider>(context).getGroup(widget.groupName);
     List<String> groupMembers = group.members;
 
     return Scaffold(
@@ -40,12 +41,14 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
           children: [
             TextField(
               controller: _descriptionController,
-              decoration: const InputDecoration(labelText: 'Transaction Description'),
+              decoration:
+                  const InputDecoration(labelText: 'Transaction Description'),
               onChanged: (_) => validateFields(),
             ),
             TextField(
               controller: _amountController,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
                 FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))
               ],
@@ -73,10 +76,12 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 );
                 if (selected != null) {
                   setState(() {
-                    _selectedParticipants = Set.from(selected); // Prevents duplicates
+                    _selectedParticipants =
+                        Set.from(selected); // Prevents duplicates
                     // Recalculate split with the selected participants
                     if (_splitMethod != null) {
-                      _participantShares = _calculateSplit({"method": _splitMethod});
+                      _participantShares =
+                          _calculateSplit({"method": _splitMethod});
                     }
                   });
                 }
@@ -116,25 +121,26 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
             ElevatedButton(
               onPressed: isSaveEnabled
                   ? () {
-                final amount = double.tryParse(_amountController.text);
-                if (amount != null && _descriptionController.text.isNotEmpty) {
-                  try {
-                    final transaction = Transaction(
-                      description: _descriptionController.text.trim(),
-                      amount: amount,
-                      date: _transactionDate,
-                      participantShares: _participantShares,
-                    );
-                    Provider.of<GroupProvider>(context, listen: false)
-                        .addTransaction(widget.groupName, transaction);
-                    Navigator.pop(context);
-                  } catch (e) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(e.toString())),
-                    );
-                  }
-                }
-              }
+                      final amount = double.tryParse(_amountController.text);
+                      if (amount != null &&
+                          _descriptionController.text.isNotEmpty) {
+                        try {
+                          final transaction = Transaction(
+                            description: _descriptionController.text.trim(),
+                            amount: amount,
+                            date: _transactionDate,
+                            participantShares: _participantShares,
+                          );
+                          Provider.of<GroupProvider>(context, listen: false)
+                              .addTransaction(widget.groupName, transaction);
+                          Navigator.pop(context);
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
+                        }
+                      }
+                    }
                   : null,
               child: const Text("Save Transaction"),
             ),
@@ -150,7 +156,8 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
       final isAmountValid = _amountController.text.isNotEmpty &&
           RegExp(r'^\d+(\.\d{0,2})?$').hasMatch(_amountController.text);
       final isSplitMethodSelected = _splitMethod != null;
-      isSaveEnabled = isDescriptionValid && isAmountValid && isSplitMethodSelected;
+      isSaveEnabled =
+          isDescriptionValid && isAmountValid && isSplitMethodSelected;
     });
   }
 

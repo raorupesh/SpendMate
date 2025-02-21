@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:spendmate/providers/chores_provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/providers/chores_provider.dart'; // Import ChoreProvider
+import 'package:spendmate/screens/splash_screen.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
-import 'package:spendmate/screens/splash_screen.dart';
 import 'package:spendmate/widgets/bottom_nav_bar.dart';
 
 void main() {
@@ -19,7 +19,7 @@ class SpendMateApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => GroupProvider()),
-        ChangeNotifierProvider(create: (context) => ChoreProvider()), // Added ChoreProvider
+        ChangeNotifierProvider(create: (context) => ChoreProvider()),
       ],
       child: MaterialApp(
         title: 'SpendMate',
