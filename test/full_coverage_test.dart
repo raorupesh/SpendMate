@@ -19,6 +19,26 @@ import '../lib/transactions/transaction_details_page.dart';
 import '../lib/widgets/bottom_nav_bar.dart';
 
 void main() {
+  testWidgets('SignUpPage UI renders correctly', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SignUpPage()));
+
+    // Check if "Sign Up" title exists (finds first instance)
+    expect(find.text('Sign Up'), findsWidgets); // Allows multiple matches
+
+    // Check if all fields exist
+    expect(find.text('Full Name'), findsOneWidget);
+    expect(find.text('Phone Number'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
+  });
+
+  testWidgets('SignUp button is disabled initially', (WidgetTester tester) async {
+    await tester.pumpWidget(const MaterialApp(home: SignUpPage()));
+
+    final signUpButton = find.widgetWithText(ElevatedButton, 'Sign Up');
+    expect(tester.widget<ElevatedButton>(signUpButton).onPressed, isNull);
+  });
+
   testWidgets('TransactionDetailsPage UI and Delete Functionality',
       (WidgetTester tester) async {
     final groupProvider = GroupProvider();
@@ -585,30 +605,6 @@ void main() {
   });
 
   group('Chores Tests', () {
-    testWidgets('Verify UI elements in AssignChoresPage',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (context) => ChoreProvider()),
-          ],
-          child: const MaterialApp(home: AssignChoresPage()),
-        ),
-      );
-
-      // Verify if page title exists
-      expect(find.text('Assign Weekly Chores'), findsOneWidget);
-
-      // Verify TextField for participant count exists
-      expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('Number of People'), findsOneWidget);
-
-      // Verify dropdown for assignment method
-      expect(find.text('Select Assignment Method'), findsOneWidget);
-
-      // Verify Generate Schedule button exists
-      expect(find.text('Generate Schedule'), findsOneWidget);
-    });
 
     test('ChoreProvider updates participant count correctly', () {
       final choreProvider = ChoreProvider();

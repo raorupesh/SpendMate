@@ -10,26 +10,11 @@ class AssignChoresPage extends StatefulWidget {
 }
 
 class _AssignChoresPageState extends State<AssignChoresPage> {
-  final TextEditingController _participantCountController =
-  TextEditingController();
-  final List<String> daysOfWeek = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday"
-  ];
-  final List<String> tasks = [
-    "Cleaning",
-    "Dishes",
-    "Cooking",
-    "Laundry",
-    "Trash",
-    "Other"
-  ];
-
+  final TextEditingController _choreNameController = TextEditingController();
+  final TextEditingController _participantNameController = TextEditingController();
+  final List<String> participants = [];
+  final List<String> daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  final List<String> tasks = ["Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"];
   Map<String, Map<String, String>> directAssignments = {};
 
   @override
@@ -46,72 +31,61 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Chore Name Input
             TextField(
-              controller: _participantCountController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Number of People"),
-              onChanged: (value) {
-                int count = int.tryParse(value) ?? 0;
-                if (count > 1) {
-                  choreProvider.setParticipantCount(count);
-                  setState(() {
-                    directAssignments = {
-                      for (var person in choreProvider.participants) person: {}
-                    };
-                  });
-                } else {
-                  choreProvider.setParticipantCount(0);
-                  setState(() {
-                    directAssignments.clear();
-                  });
-                }
-              },
+              controller: _choreNameController,
+              decoration: const InputDecoration(labelText: "Chore Name"),
             ),
-            if (choreProvider.participants.length <= 1)
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Text(
-                  "At least 2 participants are required.",
-                  style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-                ),
-              ),
             const SizedBox(height: 16),
-            if (choreProvider.participants.length > 1) ...[
-              DropdownButton<String>(
-                isExpanded: true,
-                value: choreProvider.assignmentMethod.isNotEmpty
-                    ? choreProvider.assignmentMethod
-                    : null,
-                hint: const Text("Select Assignment Method"),
-                items: ["Enter Free Time", "Direct Assign"]
-                    .map((method) =>
-                    DropdownMenuItem(value: method, child: Text(method)))
-                    .toList(),
-                onChanged: (method) {
-                  if (method != null) {
-                    choreProvider.setAssignmentMethod(method);
-                    setState(() {});
-                  }
-                },
-              ),
-              const SizedBox(height: 16),
-              if (choreProvider.assignmentMethod == "Direct Assign")
-                Expanded(child: _buildDirectAssignTable(choreProvider)),
-              if (choreProvider.showError)
-                Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: Text(
-                    "Please assign tasks for all days before generating the schedule.",
-                    style: const TextStyle(
-                        color: Colors.red, fontWeight: FontWeight.bold),
+
+            // Add Participants Section
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _participantNameController,
+                    decoration: const InputDecoration(hintText: "Enter participant name"),
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    if (_participantNameController.text.isNotEmpty) {
+                      setState(() {
+                        participants.add(_participantNameController.text);
+                        directAssignments[_participantNameController.text] = {};
+                        _participantNameController.clear();
+                      });
+                    }
+                  },
+                ),
+              ],
+            ),
+
+            // Display Participants
+            if (participants.isNotEmpty) ...[
+              Wrap(
+                spacing: 8.0,
+                children: participants.map((name) => Chip(label: Text(name))).toList(),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Show warning if less than 2 participants
+            if (participants.length < 2)
+              const Text(
+                "At least 2 participants are required.",
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+
+            // Assign Chores
+            if (participants.length >= 2) ...[
+              Expanded(child: _buildDirectAssignTable()),
               const SizedBox(height: 20),
               Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    if (directAssignments.values
-                        .any((dayMap) => dayMap.isEmpty)) {
+                    if (directAssignments.values.any((dayMap) => dayMap.isEmpty)) {
                       setState(() {
                         choreProvider.showError = true;
                       });
@@ -131,17 +105,16 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
     );
   }
 
-  Widget _buildDirectAssignTable(ChoreProvider choreProvider) {
+  Widget _buildDirectAssignTable() {
     return ListView.builder(
-      itemCount: choreProvider.participants.length,
+      itemCount: participants.length,
       itemBuilder: (context, index) {
-        String person = choreProvider.participants[index];
+        String person = participants[index];
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: ExpansionTile(
-            title: Text(person,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            title: Text(person, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             children: daysOfWeek.map((day) {
               return ListTile(
                 title: Text(day),
@@ -149,10 +122,7 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
                   hint: const Text("Assign Task"),
                   value: directAssignments[person]?[day],
                   items: tasks.map((task) {
-                    return DropdownMenuItem(
-                      value: task,
-                      child: Text(task),
-                    );
+                    return DropdownMenuItem(value: task, child: Text(task));
                   }).toList(),
                   onChanged: (task) {
                     setState(() {
