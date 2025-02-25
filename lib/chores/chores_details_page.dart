@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:spendmate/providers/chores_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:spendmate/chores/assign_chores_page.dart';
+import 'package:spendmate/providers/chores_provider.dart';
 
 class ChoresDetailsPage extends StatelessWidget {
   const ChoresDetailsPage({super.key});
@@ -20,35 +20,40 @@ class ChoresDetailsPage extends StatelessWidget {
       body: Container(
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.teal.shade50, Colors.teal.shade100], // Soft gradient background
+            colors: [Colors.teal.shade50, Colors.teal.shade100],
+            // Soft gradient background
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: choreProvider.finalSchedule.isNotEmpty
             ? Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Schedule for $currentMonth",
-                style: const TextStyle(
-                    fontSize: 20, fontWeight: FontWeight.bold, color: Colors.teal),
-              ),
-              const SizedBox(height: 10),
-              Expanded(child: _buildFormattedSchedule(choreProvider)),
-            ],
-          ),
-        )
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Schedule for $currentMonth",
+                      style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.teal),
+                    ),
+                    const SizedBox(height: 10),
+                    Expanded(child: _buildFormattedSchedule(choreProvider)),
+                  ],
+                ),
+              )
             : const Center(
-          child: Text(
-            "No schedule generated for this month.",
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500, color: Colors.grey),
-          ),
-        ),
+                child: Text(
+                  "No schedule generated for this month.",
+                  style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey),
+                ),
+              ),
       ),
-
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
         onPressed: () {
@@ -95,7 +100,8 @@ class ChoresDetailsPage extends StatelessWidget {
           Card(
             elevation: 4, // Adds a nice shadow effect
             margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
             child: Padding(
               padding: const EdgeInsets.all(12),
               child: Column(
@@ -104,7 +110,9 @@ class ChoresDetailsPage extends StatelessWidget {
                   Text(
                     day,
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal),
                   ),
                   const Divider(), // A separator for better clarity
                   Column(children: personTasks),
@@ -119,8 +127,9 @@ class ChoresDetailsPage extends StatelessWidget {
     return dayWidgets.isNotEmpty
         ? ListView(children: dayWidgets)
         : const Center(
-      child: Text("No tasks assigned.", style: TextStyle(color: Colors.grey, fontSize: 16)),
-    );
+            child: Text("No tasks assigned.",
+                style: TextStyle(color: Colors.grey, fontSize: 16)),
+          );
   }
 
   /// Returns an icon based on the assigned task

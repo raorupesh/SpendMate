@@ -10,11 +10,28 @@ class AssignChoresPage extends StatefulWidget {
 }
 
 class _AssignChoresPageState extends State<AssignChoresPage> {
-  final TextEditingController _participantCountController = TextEditingController();
-  final List<String> daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  final List<String> tasks = ["Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"];
+  final TextEditingController _participantCountController =
+      TextEditingController();
+  final List<String> daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+  ];
+  final List<String> tasks = [
+    "Cleaning",
+    "Dishes",
+    "Cooking",
+    "Laundry",
+    "Trash",
+    "Other"
+  ];
 
-  Map<String, Map<String, String>> directAssignments = {}; // Store { Person -> { Day -> Task } }
+  Map<String, Map<String, String>> directAssignments =
+      {}; // Store { Person -> { Day -> Task } }
 
   @override
   Widget build(BuildContext context) {
@@ -39,20 +56,23 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
                 if (count > 0) {
                   choreProvider.setParticipantCount(count);
                   setState(() {
-                    directAssignments = {for (var person in choreProvider.participants) person: {}};
+                    directAssignments = {
+                      for (var person in choreProvider.participants) person: {}
+                    };
                   });
                 }
               },
             ),
-
             const SizedBox(height: 16),
-
             DropdownButton<String>(
               isExpanded: true,
-              value: choreProvider.assignmentMethod.isNotEmpty ? choreProvider.assignmentMethod : null,
+              value: choreProvider.assignmentMethod.isNotEmpty
+                  ? choreProvider.assignmentMethod
+                  : null,
               hint: const Text("Select Assignment Method"),
               items: ["Enter Free Time", "Direct Assign"]
-                  .map((method) => DropdownMenuItem(value: method, child: Text(method)))
+                  .map((method) =>
+                      DropdownMenuItem(value: method, child: Text(method)))
                   .toList(),
               onChanged: (method) {
                 if (method != null) {
@@ -61,27 +81,24 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
                 }
               },
             ),
-
             const SizedBox(height: 16),
-
             if (choreProvider.assignmentMethod == "Direct Assign")
               Expanded(child: _buildDirectAssignTable(choreProvider)),
-
             if (choreProvider.showError)
               Padding(
                 padding: const EdgeInsets.only(top: 10),
                 child: Text(
                   "Please assign tasks for all days before generating the schedule.",
-                  style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.bold),
                 ),
               ),
-
             const SizedBox(height: 20),
-
             Center(
               child: ElevatedButton(
                 onPressed: () {
-                  if (directAssignments.values.any((dayMap) => dayMap.isEmpty)) {
+                  if (directAssignments.values
+                      .any((dayMap) => dayMap.isEmpty)) {
                     setState(() {
                       choreProvider.showError = true;
                     });
@@ -109,7 +126,9 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: ExpansionTile(
-            title: Text(person, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            title: Text(person,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             children: daysOfWeek.map((day) {
               return ListTile(
                 title: Text("$day"),

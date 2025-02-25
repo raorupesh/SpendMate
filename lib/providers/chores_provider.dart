@@ -5,10 +5,19 @@ class ChoreProvider with ChangeNotifier {
   String assignmentMethod = "";
   bool showError = false;
 
-  Map<String, Map<String, String>> directAssignments = {}; // { Person -> { Day -> Task } }
+  Map<String, Map<String, String>> directAssignments =
+      {}; // { Person -> { Day -> Task } }
   Map<String, Map<String, String>> finalSchedule = {}; // Finalized schedule
 
-  final List<String> daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  final List<String> daysOfWeek = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
+  ];
 
   void setParticipantCount(int count) {
     participants = List.generate(count, (index) => "Person ${index + 1}");
@@ -42,7 +51,8 @@ class ChoreProvider with ChangeNotifier {
     for (var person in participants) {
       finalSchedule[person] = {};
       for (var day in daysOfWeek) {
-        finalSchedule[person]![day] = directAssignments[person]?[day] ?? "Not Assigned";
+        finalSchedule[person]![day] =
+            directAssignments[person]?[day] ?? "Not Assigned";
       }
     }
     notifyListeners();

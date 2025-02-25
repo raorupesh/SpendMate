@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:spendmate/chores/assign_chores_page.dart';
 import 'package:spendmate/chores/chores_details_page.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
 import 'package:spendmate/groups/group_details_page.dart';
@@ -11,17 +12,18 @@ import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
+
 import '../lib/groups/groups_page.dart';
 import '../lib/screens/splash_screen.dart';
 import '../lib/transactions/transaction_details_page.dart';
 import '../lib/widgets/bottom_nav_bar.dart';
-import 'package:spendmate/chores/assign_chores_page.dart';
 
 void main() {
-
-  testWidgets('TransactionDetailsPage UI and Delete Functionality', (WidgetTester tester) async {
+  testWidgets('TransactionDetailsPage UI and Delete Functionality',
+      (WidgetTester tester) async {
     final groupProvider = GroupProvider();
-    groupProvider.addGroup(Group(name: "Test Group", members: ["Alice", "Bob"]));
+    groupProvider
+        .addGroup(Group(name: "Test Group", members: ["Alice", "Bob"]));
     groupProvider.addTransaction(
       "Test Group",
       Transaction(
@@ -35,7 +37,9 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider.value(
         value: groupProvider,
-        child: const MaterialApp(home: TransactionDetailsPage(groupName: "Test Group", transactionIndex: 0)),
+        child: const MaterialApp(
+            home: TransactionDetailsPage(
+                groupName: "Test Group", transactionIndex: 0)),
       ),
     );
 
@@ -534,7 +538,8 @@ void main() {
   });
 
   group('Bottom Navigation Bar Tests', () {
-    testWidgets('Bottom Navigation Bar should switch tabs correctly', (WidgetTester tester) async {
+    testWidgets('Bottom Navigation Bar should switch tabs correctly',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -580,7 +585,8 @@ void main() {
   });
 
   group('Chores Tests', () {
-    testWidgets('Verify UI elements in AssignChoresPage', (WidgetTester tester) async {
+    testWidgets('Verify UI elements in AssignChoresPage',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MultiProvider(
           providers: [
@@ -644,7 +650,8 @@ void main() {
       expect(choreProvider.showError, false);
     });
 
-    testWidgets('ChoresDetailsPage UI and Navigation', (WidgetTester tester) async {
+    testWidgets('ChoresDetailsPage UI and Navigation',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ChangeNotifierProvider(
           create: (_) => ChoreProvider(),
@@ -656,7 +663,8 @@ void main() {
       expect(find.text("Chores Schedule"), findsOneWidget);
 
       // Verify empty state message
-      expect(find.text("No schedule generated for this month."), findsOneWidget);
+      expect(
+          find.text("No schedule generated for this month."), findsOneWidget);
 
       // Tap the FAB and navigate to AssignChoresPage
       await tester.tap(find.byType(FloatingActionButton));
