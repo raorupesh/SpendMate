@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/chores_provider.dart';
 import 'package:spendmate/chores/assign_chores_page.dart';
+import 'package:spendmate/groups/groups_page.dart';
+import 'package:spendmate/screens/home_page.dart';
+import 'package:spendmate/user_section/profile_page.dart';
 
 class ChoresDetailsPage extends StatelessWidget {
   const ChoresDetailsPage({super.key});
@@ -12,27 +15,33 @@ class ChoresDetailsPage extends StatelessWidget {
     final choreProvider = Provider.of<ChoreProvider>(context);
     final String currentMonth = DateFormat('MMMM yyyy').format(DateTime.now());
 
-    return WillPopScope( // Prevent going back
-      onWillPop: () async => false,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Chores Schedule"),
-          backgroundColor: Colors.teal,
-          automaticallyImplyLeading: false, // Removes back button
-        ),
-        body: choreProvider.hasSchedule
-            ? _buildScheduleView(choreProvider, currentMonth)
-            : _buildEmptyView(),
-        floatingActionButton: FloatingActionButton(
-          backgroundColor: Colors.teal,
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Chores Schedule"),
+        backgroundColor: Colors.teal,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.push(
+            // Navigate to Groups Page
+            Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const AssignChoresPage()),
+              MaterialPageRoute(builder: (context) => const ProfilePage()),
             );
           },
-          child: const Icon(Icons.add, size: 28),
         ),
+      ),
+      body: choreProvider.hasSchedule
+          ? _buildScheduleView(choreProvider, currentMonth)
+          : _buildEmptyView(),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.teal,
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AssignChoresPage()),
+          );
+        },
+        child: const Icon(Icons.add, size: 28),
       ),
     );
   }
