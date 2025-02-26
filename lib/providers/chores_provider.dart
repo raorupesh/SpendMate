@@ -2,30 +2,24 @@ import 'package:flutter/cupertino.dart';
 
 class ChoreProvider with ChangeNotifier {
   List<String> participants = [];
-  String assignmentMethod = "";
+  String choreName = "";
   bool showError = false;
+  bool hasSchedule = false; // Track if a schedule exists
 
-  Map<String, Map<String, String>> directAssignments =
-      {}; // { Person -> { Day -> Task } }
+  Map<String, Map<String, String>> directAssignments = {}; // { Person -> { Day -> Task } }
   Map<String, Map<String, String>> finalSchedule = {}; // Finalized schedule
 
   final List<String> daysOfWeek = [
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-    "Friday",
-    "Saturday",
-    "Sunday"
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
   ];
 
-  void setParticipantCount(int count) {
-    participants = List.generate(count, (index) => "Person ${index + 1}");
+  void setChoreName(String name) {
+    choreName = name;
     notifyListeners();
   }
 
-  void setAssignmentMethod(String method) {
-    assignmentMethod = method;
+  void setParticipants(List<String> names) {
+    participants = names;
     notifyListeners();
   }
 
@@ -36,7 +30,7 @@ class ChoreProvider with ChangeNotifier {
   }
 
   bool validateInputs() {
-    if (assignmentMethod.isEmpty || directAssignments.isEmpty) {
+    if (choreName.isEmpty || directAssignments.isEmpty || participants.length < 2) {
       showError = true;
       notifyListeners();
       return false;
@@ -51,10 +45,10 @@ class ChoreProvider with ChangeNotifier {
     for (var person in participants) {
       finalSchedule[person] = {};
       for (var day in daysOfWeek) {
-        finalSchedule[person]![day] =
-            directAssignments[person]?[day] ?? "Not Assigned";
+        finalSchedule[person]![day] = directAssignments[person]?[day] ?? "Not Assigned";
       }
     }
+    hasSchedule = true; // Mark schedule as created
     notifyListeners();
   }
 }

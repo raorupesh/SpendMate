@@ -604,7 +604,7 @@ void main() {
     });
   });
 
-  group('Chores Tests', () {
+  group('Chores Tests', () {  
 
     test('ChoreProvider updates participant count correctly', () {
       final choreProvider = ChoreProvider();

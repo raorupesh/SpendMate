@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/chores_provider.dart';
+import 'package:spendmate/chores/chores_details_page.dart';
 
 class AssignChoresPage extends StatefulWidget {
   const AssignChoresPage({super.key});
@@ -13,8 +14,12 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
   final TextEditingController _choreNameController = TextEditingController();
   final TextEditingController _participantNameController = TextEditingController();
   final List<String> participants = [];
-  final List<String> daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  final List<String> tasks = ["Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"];
+  final List<String> daysOfWeek = [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+  ];
+  final List<String> tasks = [
+    "Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"
+  ];
   Map<String, Map<String, String>> directAssignments = {};
 
   @override
@@ -35,6 +40,7 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
             TextField(
               controller: _choreNameController,
               decoration: const InputDecoration(labelText: "Chore Name"),
+              onChanged: (value) => choreProvider.setChoreName(value),
             ),
             const SizedBox(height: 16),
 
@@ -56,6 +62,7 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
                         directAssignments[_participantNameController.text] = {};
                         _participantNameController.clear();
                       });
+                      choreProvider.setParticipants(participants);
                     }
                   },
                 ),
@@ -92,7 +99,10 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
                     } else {
                       choreProvider.setDirectAssignments(directAssignments);
                       choreProvider.generateSchedule();
-                      Navigator.pop(context);
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ChoresDetailsPage()),
+                      );
                     }
                   },
                   child: const Text("Generate Schedule"),
