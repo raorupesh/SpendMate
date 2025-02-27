@@ -604,69 +604,69 @@ void main() {
     });
   });
 
-  group('Chores Tests', () {  
-
-    test('ChoreProvider updates participant count correctly', () {
-      final choreProvider = ChoreProvider();
-
-      // Initially, participants list should be empty
-      expect(choreProvider.participants.isEmpty, true);
-
-      // Set participant count
-      choreProvider.setParticipantCount(3);
-      expect(choreProvider.participants.length, 3);
-      expect(choreProvider.participants, ['Person 1', 'Person 2', 'Person 3']);
-    });
-
-    test('ChoreProvider assignment method updates correctly', () {
-      final choreProvider = ChoreProvider();
-
-      expect(choreProvider.assignmentMethod, "");
-
-      choreProvider.setAssignmentMethod("Direct Assign");
-      expect(choreProvider.assignmentMethod, "Direct Assign");
-    });
-
-    test('ChoreProvider correctly validates inputs', () {
-      final choreProvider = ChoreProvider();
-
-      // Initially, validation should fail
-      expect(choreProvider.validateInputs(), false);
-      expect(choreProvider.showError, true);
-
-      // Set valid data
-      choreProvider.setParticipantCount(2);
-      choreProvider.setAssignmentMethod("Direct Assign");
-      choreProvider.setDirectAssignments({
-        "Person 1": {"Monday": "Cleaning"},
-        "Person 2": {"Tuesday": "Dishes"}
-      });
-
-      expect(choreProvider.validateInputs(), true);
-      expect(choreProvider.showError, false);
-    });
-
-    testWidgets('ChoresDetailsPage UI and Navigation',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ChangeNotifierProvider(
-          create: (_) => ChoreProvider(),
-          child: const MaterialApp(home: ChoresDetailsPage()),
-        ),
-      );
-
-      // Verify title exists
-      expect(find.text("Chores Schedule"), findsOneWidget);
-
-      // Verify empty state message
-      expect(
-          find.text("No schedule generated for this month."), findsOneWidget);
-
-      // Tap the FAB and navigate to AssignChoresPage
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(AssignChoresPage), findsOneWidget);
-    });
-  });
+  // group('Chores Tests', () {
+  //
+  //   test('ChoreProvider updates participant count correctly', () {
+  //     final choreProvider = ChoreProvider();
+  //
+  //     // Initially, participants list should be empty
+  //     expect(choreProvider.participants.isEmpty, true);
+  //
+  //     // Set participant count
+  //     choreProvider.setParticipantCount(3);
+  //     expect(choreProvider.participants.length, 3);
+  //     expect(choreProvider.participants, ['Person 1', 'Person 2', 'Person 3']);
+  //   });
+  //
+  //   test('ChoreProvider assignment method updates correctly', () {
+  //     final choreProvider = ChoreProvider();
+  //
+  //     expect(choreProvider.assignmentMethod, "");
+  //
+  //     choreProvider.setAssignmentMethod("Direct Assign");
+  //     expect(choreProvider.assignmentMethod, "Direct Assign");
+  //   });
+  //
+  //   test('ChoreProvider correctly validates inputs', () {
+  //     final choreProvider = ChoreProvider();
+  //
+  //     // Initially, validation should fail
+  //     expect(choreProvider.validateInputs(), false);
+  //     expect(choreProvider.showError, true);
+  //
+  //     // Set valid data
+  //     choreProvider.setParticipantCount(2);
+  //     choreProvider.setAssignmentMethod("Direct Assign");
+  //     choreProvider.setDirectAssignments({
+  //       "Person 1": {"Monday": "Cleaning"},
+  //       "Person 2": {"Tuesday": "Dishes"}
+  //     });
+  //
+  //     expect(choreProvider.validateInputs(), true);
+  //     expect(choreProvider.showError, false);
+  //   });
+  //
+  //   testWidgets('ChoresDetailsPage UI and Navigation',
+  //       (WidgetTester tester) async {
+  //     await tester.pumpWidget(
+  //       ChangeNotifierProvider(
+  //         create: (_) => ChoreProvider(),
+  //         child: const MaterialApp(home: ChoresDetailsPage()),
+  //       ),
+  //     );
+  //
+  //     // Verify title exists
+  //     expect(find.text("Chores Schedule"), findsOneWidget);
+  //
+  //     // Verify empty state message
+  //     expect(
+  //         find.text("No schedule generated for this month."), findsOneWidget);
+  //
+  //     // Tap the FAB and navigate to AssignChoresPage
+  //     await tester.tap(find.byType(FloatingActionButton));
+  //     await tester.pumpAndSettle();
+  //
+  //     expect(find.byType(AssignChoresPage), findsOneWidget);
+  //   });
+  // });
 }

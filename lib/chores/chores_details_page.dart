@@ -3,8 +3,6 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/chores_provider.dart';
 import 'package:spendmate/chores/assign_chores_page.dart';
-import 'package:spendmate/groups/groups_page.dart';
-import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 
 class ChoresDetailsPage extends StatelessWidget {
@@ -23,10 +21,7 @@ class ChoresDetailsPage extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
             // Navigate to Groups Page
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const ProfilePage()),
-            );
+            Navigator.pushReplacementNamed(context, '/');
           },
         ),
       ),
