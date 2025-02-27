@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/chores/assign_chores_page.dart';
+import 'package:spendmate/chores/chores_details_view_page.dart';
 import 'package:spendmate/providers/chores_provider.dart';
 
 class ChoresDetailsPage extends StatelessWidget {
@@ -19,14 +20,55 @@ class ChoresDetailsPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            // Navigate to Groups Page
             Navigator.pushReplacementNamed(context, '/');
           },
         ),
       ),
-      body: choreProvider.hasSchedule
-          ? _buildScheduleView(choreProvider, currentMonth)
-          : _buildEmptyView(),
+      body: choreProvider.chorePlans.isNotEmpty
+          ? ListView.builder(
+              padding: const EdgeInsets.all(16.0),
+              itemCount: choreProvider.chorePlans.length,
+              itemBuilder: (context, index) {
+                final plan = choreProvider.chorePlans.reversed
+                    .toList()[index]; // Show recent first
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 3,
+                  child: ListTile(
+                    title: Text(plan.choreName,
+                        style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.teal)),
+                    subtitle:
+                        Text("Participants: ${plan.participants.join(', ')}"),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.delete, color: Colors.red),
+                      onPressed: () {
+                        _showDeleteConfirmationDialog(
+                            context, choreProvider, index);
+                      },
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              ChoreDetailsViewPage(plan: plan),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            )
+          : const Center(
+              child: Text(
+                "No chores assigned yet. Tap + to create a schedule.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, color: Colors.grey),
+              ),
+            ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.teal,
         onPressed: () {
@@ -40,100 +82,30 @@ class ChoresDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyView() {
-    return const Center(
-      child: Text(
-        "No chores assigned yet.\nTap + to create a schedule.",
-        textAlign: TextAlign.center,
-        style: TextStyle(fontSize: 16, color: Colors.grey),
-      ),
-    );
-  }
-
-  Widget _buildScheduleView(ChoreProvider choreProvider, String currentMonth) {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Chore: ${choreProvider.choreName}",
-            style: const TextStyle(
-                fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal),
-          ),
-          const SizedBox(height: 10),
-          Text("Schedule for $currentMonth",
-              style: const TextStyle(fontSize: 18)),
-          const Divider(),
-          Expanded(child: _buildChoreList(choreProvider)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildChoreList(ChoreProvider choreProvider) {
-    List<Widget> dayWidgets = [];
-
-    for (var day in choreProvider.daysOfWeek) {
-      List<Widget> taskWidgets = [];
-
-      choreProvider.finalSchedule.forEach((person, tasks) {
-        if (tasks.containsKey(day) && tasks[day] != "Not Assigned") {
-          taskWidgets.add(
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Row(
-                children: [
-                  const Icon(Icons.task, color: Colors.teal, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      "$person: ${tasks[day]}",
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ],
-              ),
+  void _showDeleteConfirmationDialog(
+      BuildContext context, ChoreProvider choreProvider, int index) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Delete Chore Plan"),
+          content:
+              const Text("Are you sure you want to delete this chore plan?"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
             ),
-          );
-        }
-      });
-
-      if (taskWidgets.isNotEmpty) {
-        // Show only days with assigned tasks
-        dayWidgets.add(
-          Card(
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    day,
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.teal),
-                  ),
-                  const Divider(),
-                  Column(children: taskWidgets),
-                ],
-              ),
+            TextButton(
+              onPressed: () {
+                choreProvider.removeChorePlan(index);
+                Navigator.pop(context);
+              },
+              child: const Text("Delete", style: TextStyle(color: Colors.red)),
             ),
-          ),
+          ],
         );
-      }
-    }
-
-    return dayWidgets.isNotEmpty
-        ? ListView(children: dayWidgets)
-        : const Center(
-            child: Text(
-              "No tasks assigned.",
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-          );
+      },
+    );
   }
 }

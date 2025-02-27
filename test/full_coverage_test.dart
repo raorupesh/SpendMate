@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:spendmate/chores/assign_chores_page.dart';
 import 'package:spendmate/chores/chores_details_page.dart';
+import 'package:spendmate/chores/chores_details_view_page.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
 import 'package:spendmate/groups/group_details_page.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
@@ -655,112 +655,72 @@ void main() {
     });
   });
 
-  group('Chores Tests', () {
-    test('ChoreProvider updates participant list correctly', () {
-      final choreProvider = ChoreProvider();
+  testWidgets('ChoresDetailsPage displays chore plans and allows navigation',
+      (WidgetTester tester) async {
+    // Mock ChoreProvider
+    final choreProvider = ChoreProvider();
+    choreProvider.addChorePlan(ChorePlan(
+      choreName: "Weekly Cleaning",
+      participants: ["John", "Doe"],
+      directAssignments: {
+        "John": {"Monday": "Trash"}
+      },
+      finalSchedule: {},
+    ));
 
-      // Initially, participants list should be empty
-      expect(choreProvider.participants.isEmpty, true);
-
-      // Set participants
-      choreProvider.setParticipants(["Alice", "Bob", "Charlie"]);
-      expect(choreProvider.participants.length, 3);
-      expect(choreProvider.participants, ["Alice", "Bob", "Charlie"]);
-    });
-
-    test('ChoreProvider correctly validates inputs', () {
-      final choreProvider = ChoreProvider();
-
-      // Initially, validation should fail
-      expect(choreProvider.validateInputs(), false);
-      expect(choreProvider.showError, true);
-
-      // Set valid data
-      choreProvider.setChoreName("Household Cleaning");
-      choreProvider.setParticipants(["Alice", "Bob"]);
-      choreProvider.setDirectAssignments({
-        "Alice": {"Monday": "Vacuuming"},
-        "Bob": {"Tuesday": "Dishes"}
-      });
-
-      expect(choreProvider.validateInputs(), true);
-      expect(choreProvider.showError, false);
-    });
-
-    testWidgets('ChoresDetailsPage UI and Navigation',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ChangeNotifierProvider(
-          create: (_) => ChoreProvider(),
-          child: const MaterialApp(home: ChoresDetailsPage()),
-        ),
-      );
-
-      // Verify title exists
-      expect(find.text("Chores Schedule"), findsOneWidget);
-
-      // Verify empty state message
-      expect(find.text("No chores assigned yet.\nTap + to create a schedule."),
-          findsOneWidget);
-
-      // Tap the FAB and navigate to AssignChoresPage
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
-
-      expect(find.byType(AssignChoresPage), findsOneWidget);
-    });
-  });
-
-  Widget createTestWidget(ChoreProvider choreProvider) {
-    return ChangeNotifierProvider<ChoreProvider>.value(
-      value: choreProvider,
-      child: const MaterialApp(
-        home: Scaffold(
-          body: ChoresDetailsPage(),
-        ),
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [ChangeNotifierProvider.value(value: choreProvider)],
+        child: MaterialApp(home: ChoresDetailsPage()),
       ),
     );
-  }
 
-  group('Chores Schedule UI Tests', () {
-    testWidgets('Shows empty state when no schedule exists',
-        (WidgetTester tester) async {
-      final choreProvider = ChoreProvider();
-      choreProvider.hasSchedule = false; // No schedule
+    // Verify chore plan is displayed
+    expect(find.text("Weekly Cleaning"), findsOneWidget);
+    expect(find.text("Participants: John, Doe"), findsOneWidget);
 
-      await tester.pumpWidget(createTestWidget(choreProvider));
+    // Tap on a chore plan to navigate
+    await tester.tap(find.text("Weekly Cleaning"));
+    await tester.pumpAndSettle();
 
-      expect(find.text("No chores assigned yet.\nTap + to create a schedule."),
-          findsOneWidget);
-    });
+    // Ensure navigation happens
+    expect(find.byType(ChoreDetailsViewPage), findsOneWidget);
+  });
 
-    testWidgets('Shows schedule when chores exist',
-        (WidgetTester tester) async {
-      final choreProvider = ChoreProvider();
-      choreProvider.hasSchedule = true;
-      choreProvider.setChoreName("Household Cleaning");
-      choreProvider.finalSchedule = {
-        "Alice": {"Monday": "Vacuuming"},
-        "Bob": {"Tuesday": "Dishes"}
-      };
+  testWidgets('ChoresDetailsPage shows confirmation dialog before deletion',
+      (WidgetTester tester) async {
+    final choreProvider = ChoreProvider();
+    choreProvider.addChorePlan(ChorePlan(
+      choreName: "Weekend Tasks",
+      participants: ["Alice"],
+      directAssignments: {
+        "Alice": {"Sunday": "Cooking"}
+      },
+      finalSchedule: {},
+    ));
 
-      await tester.pumpWidget(createTestWidget(choreProvider));
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: [ChangeNotifierProvider.value(value: choreProvider)],
+        child: MaterialApp(home: ChoresDetailsPage()),
+      ),
+    );
 
-      expect(find.text("Chore: Household Cleaning"), findsOneWidget);
-      expect(find.text("Alice: Vacuuming"), findsOneWidget);
-      expect(find.text("Bob: Dishes"), findsOneWidget);
-    });
+    // Find delete button and tap it
+    await tester.tap(find.byIcon(Icons.delete));
+    await tester.pump();
 
-    testWidgets('Navigates to AssignChoresPage when FAB is clicked',
-        (WidgetTester tester) async {
-      final choreProvider = ChoreProvider();
-      await tester.pumpWidget(createTestWidget(choreProvider));
+    // Confirm delete dialog appears
+    expect(find.text("Delete Chore Plan"), findsOneWidget);
+    expect(find.text("Are you sure you want to delete this chore plan?"),
+        findsOneWidget);
 
-      await tester.tap(find.byType(FloatingActionButton));
-      await tester.pumpAndSettle();
+    // Tap "Delete" button
+    await tester.tap(find.text("Delete"));
+    await tester.pumpAndSettle();
 
-      expect(find.byType(AssignChoresPage), findsOneWidget);
-    });
+    // Verify chore plan is removed
+    expect(find.text("Weekend Tasks"), findsNothing);
   });
 
   group('SharedPreferences Tests', () {
@@ -807,14 +767,16 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    testWidgets('Should display default profile image', (WidgetTester tester) async {
+    testWidgets('Should display default profile image',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
 
       final circleAvatarFinder = find.byType(CircleAvatar);
       expect(circleAvatarFinder, findsOneWidget);
     });
 
-    testWidgets('Should display profile image when set in SharedPreferences', (WidgetTester tester) async {
+    testWidgets('Should display profile image when set in SharedPreferences',
+        (WidgetTester tester) async {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('profile_image', 'test_path.jpg');
 
@@ -824,7 +786,8 @@ void main() {
       expect(find.byType(CircleAvatar), findsOneWidget);
     });
 
-    testWidgets('Should toggle phone number visibility', (WidgetTester tester) async {
+    testWidgets('Should toggle phone number visibility',
+        (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
 
       final visibilityIconFinder = find.byIcon(Icons.visibility_off);
@@ -835,6 +798,5 @@ void main() {
 
       expect(find.byIcon(Icons.visibility), findsOneWidget);
     });
-
   });
 }
