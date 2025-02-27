@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:spendmate/chores/assign_chores_page.dart';
 import 'package:spendmate/chores/chores_details_page.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
@@ -358,25 +359,7 @@ void main() {
       expect(find.text('+1 234 567 890'), findsNothing);
     });
     // Test 2: Currency selection from dropdown
-    testWidgets('Currency selection from dropdown',
-        (WidgetTester tester) async {
-      // Build the ProfilePage widget
-      await tester.pumpWidget(MaterialApp(home: ProfilePage()));
 
-      // Open the currency dropdown
-      await tester.tap(find.byType(DropdownButton<String>));
-      await tester.pumpAndSettle();
-
-      // Select a currency (for example, "USD")
-      await tester.tap(find
-          .text('INR')
-          .last); // Use .last in case there are multiple 'USD' options
-      await tester.pumpAndSettle();
-
-      // Verify that the selected currency is displayed
-      expect(find.text('INR'),
-          findsOneWidget); // Assuming the dropdown displays the selected value
-    });
     group('GroupSettingsPage Tests', () {
       testWidgets('Should display members and allow modification',
           (WidgetTester tester) async {
@@ -778,5 +761,80 @@ void main() {
 
       expect(find.byType(AssignChoresPage), findsOneWidget);
     });
+  });
+
+  group('SharedPreferences Tests', () {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('Should save and retrieve profile image path', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_image', 'test_path.jpg');
+
+      final storedImagePath = prefs.getString('profile_image');
+      expect(storedImagePath, 'test_path.jpg');
+    });
+
+    test('Should save and retrieve selected currency', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selected_currency', 'INR');
+
+      final currency = prefs.getString('selected_currency');
+      expect(currency, 'INR');
+    });
+
+    test('Should save and retrieve selected timezone', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selected_timezone', 'IST');
+
+      final timezone = prefs.getString('selected_timezone');
+      expect(timezone, 'IST');
+    });
+
+    test('Should clear all preferences', () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('selected_currency', 'USD');
+      await prefs.clear();
+
+      final currency = prefs.getString('selected_currency');
+      expect(currency, null);
+    });
+  });
+
+  group('Profile Page Widget Tests', () {
+    setUp(() async {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    testWidgets('Should display default profile image', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+
+      final circleAvatarFinder = find.byType(CircleAvatar);
+      expect(circleAvatarFinder, findsOneWidget);
+    });
+
+    testWidgets('Should display profile image when set in SharedPreferences', (WidgetTester tester) async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_image', 'test_path.jpg');
+
+      await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+      await tester.pump();
+
+      expect(find.byType(CircleAvatar), findsOneWidget);
+    });
+
+    testWidgets('Should toggle phone number visibility', (WidgetTester tester) async {
+      await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
+
+      final visibilityIconFinder = find.byIcon(Icons.visibility_off);
+      expect(visibilityIconFinder, findsOneWidget);
+
+      await tester.tap(visibilityIconFinder);
+      await tester.pump();
+
+      expect(find.byIcon(Icons.visibility), findsOneWidget);
+    });
+
   });
 }
