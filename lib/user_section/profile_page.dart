@@ -1,4 +1,8 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 import 'login_page.dart'; // Import LoginPage
 
@@ -13,9 +17,37 @@ class _ProfilePageState extends State<ProfilePage> {
   bool _isPhoneNumberVisible = false; // Toggle for showing/hiding phone number
   String _selectedTimezone = 'PST'; // Default selected timezone
   String _selectedCurrency = 'USD'; // Default selected currency
+  String? _profileImagePath; // Store profile image path
 
   final List<String> _timezones = ['PST', 'CST', 'EST', 'GMT', 'IST'];
   final List<String> _currencies = ['USD', 'EUR', 'INR', 'GBP', 'AUD'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfileImage();
+  }
+
+  Future<void> _loadProfileImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _profileImagePath = prefs.getString('profile_image');
+    });
+  }
+
+  Future<void> _pickImage() async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _profileImagePath = pickedFile.path;
+      });
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profile_image', pickedFile.path);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,26 +60,46 @@ class _ProfilePageState extends State<ProfilePage> {
         padding: const EdgeInsets.all(16.0),
         child: ListView(
           children: [
-            // Profile image
-            const CircleAvatar(
-              radius: 80,
-              backgroundImage: AssetImage('assets/images/user_image.png'),
+            // Profile Image with Edit Icon
+            Center(
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: 80,
+                    backgroundImage: _profileImagePath != null
+                        ? FileImage(File(_profileImagePath!))
+                        : const AssetImage('assets/images/user_image.png') as ImageProvider,
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: InkWell(
+                      onTap: _pickImage,
+                      child: Container(
+                        decoration: const BoxDecoration(
+                          color: Colors.teal,
+                          shape: BoxShape.circle,
+                        ),
+                        padding: const EdgeInsets.all(8),
+                        child: const Icon(Icons.edit, color: Colors.white, size: 24),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
 
-            // Full Name (Bold header)
+            // Full Name
             const Text(
               "Full Name:",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
             ),
             const SizedBox(height: 4),
-            const Text(
-              "Spend Mate",
-              style: TextStyle(fontSize: 16),
-            ),
+            const Text("Spend Mate", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 12),
 
-            // Email (Bold header)
+            // Email
             const Text(
               "Email ID:",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -56,7 +108,7 @@ class _ProfilePageState extends State<ProfilePage> {
             const Text("spendmate@example.com", style: TextStyle(fontSize: 16)),
             const SizedBox(height: 12),
 
-            // Phone Number with Eye Icon (Bold header)
+            // Phone Number
             const Text(
               "Phone:",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -65,14 +117,11 @@ class _ProfilePageState extends State<ProfilePage> {
               children: [
                 Text(
                   _isPhoneNumberVisible ? "+1 234 567 890" : "**********",
-                  // Hidden phone number
                   style: const TextStyle(fontSize: 16),
                 ),
                 IconButton(
                   icon: Icon(
-                    _isPhoneNumberVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
+                    _isPhoneNumberVisible ? Icons.visibility : Icons.visibility_off,
                     color: Colors.teal,
                   ),
                   onPressed: () {
@@ -85,7 +134,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 16),
 
-            // Currency Dropdown (Bold header)
+            // Currency Dropdown
             const Text(
               "Currency",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -94,9 +143,9 @@ class _ProfilePageState extends State<ProfilePage> {
               value: _selectedCurrency,
               items: _currencies
                   .map((currency) => DropdownMenuItem<String>(
-                        value: currency,
-                        child: Text(currency),
-                      ))
+                value: currency,
+                child: Text(currency),
+              ))
                   .toList(),
               onChanged: (newValue) {
                 setState(() {
@@ -111,19 +160,7 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 16),
 
-            // Language (Bold header)
-            const Text(
-              "Language:",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "English",
-              style: TextStyle(fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-
-            // Timezone Dropdown (Bold header)
+            // Timezone Dropdown
             const Text(
               "Timezone",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -132,9 +169,9 @@ class _ProfilePageState extends State<ProfilePage> {
               value: _selectedTimezone,
               items: _timezones
                   .map((timezone) => DropdownMenuItem<String>(
-                        value: timezone,
-                        child: Text(timezone),
-                      ))
+                value: timezone,
+                child: Text(timezone),
+              ))
                   .toList(),
               onChanged: (newValue) {
                 setState(() {
@@ -149,12 +186,11 @@ class _ProfilePageState extends State<ProfilePage> {
             ),
             const SizedBox(height: 16),
 
-            // Logout button at the bottom
+            // Logout Button
             Padding(
               padding: const EdgeInsets.only(top: 16.0),
               child: ElevatedButton(
                 onPressed: () {
-                  // Log out and navigate to login page
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const LoginPage()),
