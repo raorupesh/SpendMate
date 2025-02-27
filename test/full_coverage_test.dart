@@ -12,13 +12,78 @@ import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
-
 import '../lib/groups/groups_page.dart';
+import '../lib/groups/select_participants_page.dart';
 import '../lib/screens/splash_screen.dart';
+import '../lib/transactions/split_method_page.dart';
 import '../lib/transactions/transaction_details_page.dart';
 import '../lib/widgets/bottom_nav_bar.dart';
 
 void main() {
+
+  testWidgets('Default split method is Equal', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: SplitMethodPage(
+          splitMethod: 'Equal',
+          onSave: (_) {},
+        ),
+      ),
+    );
+
+    // Verify default selection
+    expect(find.text('Equal Split'), findsOneWidget);
+  });  group('SelectParticipantsPage Tests', () {
+    testWidgets('Displays participants and allows selection', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SelectParticipantsPage(
+            members: ['Alice', 'Bob', 'Charlie'],
+            selectedParticipants: [],
+          ),
+        ),
+      );
+
+      // Check if all participant names are displayed
+      expect(find.text('Alice'), findsOneWidget);
+      expect(find.text('Bob'), findsOneWidget);
+      expect(find.text('Charlie'), findsOneWidget);
+
+      // Tap to select 'Alice'
+      await tester.tap(find.text('Alice'));
+      await tester.pump();
+
+      // Verify selection
+      expect(find.byType(CheckboxListTile), findsNWidgets(3));
+    });
+
+    testWidgets('Selecting participants and navigating back returns data',
+            (WidgetTester tester) async {
+          await tester.pumpWidget(
+            MaterialApp(
+              home: SelectParticipantsPage(
+                members: ['Alice', 'Bob'],
+                selectedParticipants: ['Bob'],
+              ),
+            ),
+          );
+
+          // Ensure Bob is pre-selected
+          expect(find.text('Bob'), findsOneWidget);
+
+          // Select Alice
+          await tester.tap(find.text('Alice'));
+          await tester.pump();
+
+          // Press the back button
+          await tester.tap(find.byType(FloatingActionButton));
+          await tester.pumpAndSettle();
+
+          // Ensure navigation happens and selection is saved
+          expect(find.text('Select Participants'), findsNothing);
+        });
+  });
+
   testWidgets('SignUpPage UI renders correctly', (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: SignUpPage()));
 
@@ -604,69 +669,107 @@ void main() {
     });
   });
 
-  // group('Chores Tests', () {
-  //
-  //   test('ChoreProvider updates participant count correctly', () {
-  //     final choreProvider = ChoreProvider();
-  //
-  //     // Initially, participants list should be empty
-  //     expect(choreProvider.participants.isEmpty, true);
-  //
-  //     // Set participant count
-  //     choreProvider.setParticipantCount(3);
-  //     expect(choreProvider.participants.length, 3);
-  //     expect(choreProvider.participants, ['Person 1', 'Person 2', 'Person 3']);
-  //   });
-  //
-  //   test('ChoreProvider assignment method updates correctly', () {
-  //     final choreProvider = ChoreProvider();
-  //
-  //     expect(choreProvider.assignmentMethod, "");
-  //
-  //     choreProvider.setAssignmentMethod("Direct Assign");
-  //     expect(choreProvider.assignmentMethod, "Direct Assign");
-  //   });
-  //
-  //   test('ChoreProvider correctly validates inputs', () {
-  //     final choreProvider = ChoreProvider();
-  //
-  //     // Initially, validation should fail
-  //     expect(choreProvider.validateInputs(), false);
-  //     expect(choreProvider.showError, true);
-  //
-  //     // Set valid data
-  //     choreProvider.setParticipantCount(2);
-  //     choreProvider.setAssignmentMethod("Direct Assign");
-  //     choreProvider.setDirectAssignments({
-  //       "Person 1": {"Monday": "Cleaning"},
-  //       "Person 2": {"Tuesday": "Dishes"}
-  //     });
-  //
-  //     expect(choreProvider.validateInputs(), true);
-  //     expect(choreProvider.showError, false);
-  //   });
-  //
-  //   testWidgets('ChoresDetailsPage UI and Navigation',
-  //       (WidgetTester tester) async {
-  //     await tester.pumpWidget(
-  //       ChangeNotifierProvider(
-  //         create: (_) => ChoreProvider(),
-  //         child: const MaterialApp(home: ChoresDetailsPage()),
-  //       ),
-  //     );
-  //
-  //     // Verify title exists
-  //     expect(find.text("Chores Schedule"), findsOneWidget);
-  //
-  //     // Verify empty state message
-  //     expect(
-  //         find.text("No schedule generated for this month."), findsOneWidget);
-  //
-  //     // Tap the FAB and navigate to AssignChoresPage
-  //     await tester.tap(find.byType(FloatingActionButton));
-  //     await tester.pumpAndSettle();
-  //
-  //     expect(find.byType(AssignChoresPage), findsOneWidget);
-  //   });
-  // });
+  group('Chores Tests', () {
+    test('ChoreProvider updates participant list correctly', () {
+      final choreProvider = ChoreProvider();
+
+      // Initially, participants list should be empty
+      expect(choreProvider.participants.isEmpty, true);
+
+      // Set participants
+      choreProvider.setParticipants(["Alice", "Bob", "Charlie"]);
+      expect(choreProvider.participants.length, 3);
+      expect(choreProvider.participants, ["Alice", "Bob", "Charlie"]);
+    });
+
+    test('ChoreProvider correctly validates inputs', () {
+      final choreProvider = ChoreProvider();
+
+      // Initially, validation should fail
+      expect(choreProvider.validateInputs(), false);
+      expect(choreProvider.showError, true);
+
+      // Set valid data
+      choreProvider.setChoreName("Household Cleaning");
+      choreProvider.setParticipants(["Alice", "Bob"]);
+      choreProvider.setDirectAssignments({
+        "Alice": {"Monday": "Vacuuming"},
+        "Bob": {"Tuesday": "Dishes"}
+      });
+
+      expect(choreProvider.validateInputs(), true);
+      expect(choreProvider.showError, false);
+    });
+
+    testWidgets('ChoresDetailsPage UI and Navigation', (WidgetTester tester) async {
+      await tester.pumpWidget(
+        ChangeNotifierProvider(
+          create: (_) => ChoreProvider(),
+          child: const MaterialApp(home: ChoresDetailsPage()),
+        ),
+      );
+
+      // Verify title exists
+      expect(find.text("Chores Schedule"), findsOneWidget);
+
+      // Verify empty state message
+      expect(find.text("No chores assigned yet.\nTap + to create a schedule."), findsOneWidget);
+
+      // Tap the FAB and navigate to AssignChoresPage
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AssignChoresPage), findsOneWidget);
+    });
+  });
+
+  Widget createTestWidget(ChoreProvider choreProvider) {
+    return ChangeNotifierProvider<ChoreProvider>.value(
+      value: choreProvider,
+      child: const MaterialApp(
+        home: Scaffold(
+          body: ChoresDetailsPage(),
+        ),
+      ),
+    );
+  }
+
+  group('Chores Schedule UI Tests', () {
+
+    testWidgets('Shows empty state when no schedule exists', (WidgetTester tester) async {
+      final choreProvider = ChoreProvider();
+      choreProvider.hasSchedule = false; // No schedule
+
+      await tester.pumpWidget(createTestWidget(choreProvider));
+
+      expect(find.text("No chores assigned yet.\nTap + to create a schedule."), findsOneWidget);
+    });
+
+    testWidgets('Shows schedule when chores exist', (WidgetTester tester) async {
+      final choreProvider = ChoreProvider();
+      choreProvider.hasSchedule = true;
+      choreProvider.setChoreName("Household Cleaning");
+      choreProvider.finalSchedule = {
+        "Alice": {"Monday": "Vacuuming"},
+        "Bob": {"Tuesday": "Dishes"}
+      };
+
+      await tester.pumpWidget(createTestWidget(choreProvider));
+
+      expect(find.text("Chore: Household Cleaning"), findsOneWidget);
+      expect(find.text("Alice: Vacuuming"), findsOneWidget);
+      expect(find.text("Bob: Dishes"), findsOneWidget);
+    });
+
+    testWidgets('Navigates to AssignChoresPage when FAB is clicked', (WidgetTester tester) async {
+      final choreProvider = ChoreProvider();
+      await tester.pumpWidget(createTestWidget(choreProvider));
+
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AssignChoresPage), findsOneWidget);
+    });
+
+  });
 }
