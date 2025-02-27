@@ -6,11 +6,18 @@ class ChoreProvider with ChangeNotifier {
   bool showError = false;
   bool hasSchedule = false; // Track if a schedule exists
 
-  Map<String, Map<String, String>> directAssignments = {}; // { Person -> { Day -> Task } }
+  Map<String, Map<String, String>> directAssignments =
+      {}; // { Person -> { Day -> Task } }
   Map<String, Map<String, String>> finalSchedule = {}; // Finalized schedule
 
   final List<String> daysOfWeek = [
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
   ];
 
   void setChoreName(String name) {
@@ -30,7 +37,9 @@ class ChoreProvider with ChangeNotifier {
   }
 
   bool validateInputs() {
-    if (choreName.isEmpty || directAssignments.isEmpty || participants.length < 2) {
+    if (choreName.isEmpty ||
+        directAssignments.isEmpty ||
+        participants.length < 2) {
       showError = true;
       notifyListeners();
       return false;
@@ -45,7 +54,8 @@ class ChoreProvider with ChangeNotifier {
     for (var person in participants) {
       finalSchedule[person] = {};
       for (var day in daysOfWeek) {
-        finalSchedule[person]![day] = directAssignments[person]?[day] ?? "Not Assigned";
+        finalSchedule[person]![day] =
+            directAssignments[person]?[day] ?? "Not Assigned";
       }
     }
     hasSchedule = true; // Mark schedule as created

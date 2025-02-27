@@ -12,6 +12,7 @@ import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
+
 import '../lib/groups/groups_page.dart';
 import '../lib/groups/select_participants_page.dart';
 import '../lib/screens/splash_screen.dart';
@@ -20,7 +21,6 @@ import '../lib/transactions/transaction_details_page.dart';
 import '../lib/widgets/bottom_nav_bar.dart';
 
 void main() {
-
   testWidgets('Default split method is Equal', (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -33,8 +33,10 @@ void main() {
 
     // Verify default selection
     expect(find.text('Equal Split'), findsOneWidget);
-  });  group('SelectParticipantsPage Tests', () {
-    testWidgets('Displays participants and allows selection', (WidgetTester tester) async {
+  });
+  group('SelectParticipantsPage Tests', () {
+    testWidgets('Displays participants and allows selection',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           home: SelectParticipantsPage(
@@ -58,30 +60,30 @@ void main() {
     });
 
     testWidgets('Selecting participants and navigating back returns data',
-            (WidgetTester tester) async {
-          await tester.pumpWidget(
-            MaterialApp(
-              home: SelectParticipantsPage(
-                members: ['Alice', 'Bob'],
-                selectedParticipants: ['Bob'],
-              ),
-            ),
-          );
+        (WidgetTester tester) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: SelectParticipantsPage(
+            members: ['Alice', 'Bob'],
+            selectedParticipants: ['Bob'],
+          ),
+        ),
+      );
 
-          // Ensure Bob is pre-selected
-          expect(find.text('Bob'), findsOneWidget);
+      // Ensure Bob is pre-selected
+      expect(find.text('Bob'), findsOneWidget);
 
-          // Select Alice
-          await tester.tap(find.text('Alice'));
-          await tester.pump();
+      // Select Alice
+      await tester.tap(find.text('Alice'));
+      await tester.pump();
 
-          // Press the back button
-          await tester.tap(find.byType(FloatingActionButton));
-          await tester.pumpAndSettle();
+      // Press the back button
+      await tester.tap(find.byType(FloatingActionButton));
+      await tester.pumpAndSettle();
 
-          // Ensure navigation happens and selection is saved
-          expect(find.text('Select Participants'), findsNothing);
-        });
+      // Ensure navigation happens and selection is saved
+      expect(find.text('Select Participants'), findsNothing);
+    });
   });
 
   testWidgets('SignUpPage UI renders correctly', (WidgetTester tester) async {
@@ -97,7 +99,8 @@ void main() {
     expect(find.text('Password'), findsOneWidget);
   });
 
-  testWidgets('SignUp button is disabled initially', (WidgetTester tester) async {
+  testWidgets('SignUp button is disabled initially',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const MaterialApp(home: SignUpPage()));
 
     final signUpButton = find.widgetWithText(ElevatedButton, 'Sign Up');
@@ -701,7 +704,8 @@ void main() {
       expect(choreProvider.showError, false);
     });
 
-    testWidgets('ChoresDetailsPage UI and Navigation', (WidgetTester tester) async {
+    testWidgets('ChoresDetailsPage UI and Navigation',
+        (WidgetTester tester) async {
       await tester.pumpWidget(
         ChangeNotifierProvider(
           create: (_) => ChoreProvider(),
@@ -713,7 +717,8 @@ void main() {
       expect(find.text("Chores Schedule"), findsOneWidget);
 
       // Verify empty state message
-      expect(find.text("No chores assigned yet.\nTap + to create a schedule."), findsOneWidget);
+      expect(find.text("No chores assigned yet.\nTap + to create a schedule."),
+          findsOneWidget);
 
       // Tap the FAB and navigate to AssignChoresPage
       await tester.tap(find.byType(FloatingActionButton));
@@ -735,17 +740,19 @@ void main() {
   }
 
   group('Chores Schedule UI Tests', () {
-
-    testWidgets('Shows empty state when no schedule exists', (WidgetTester tester) async {
+    testWidgets('Shows empty state when no schedule exists',
+        (WidgetTester tester) async {
       final choreProvider = ChoreProvider();
       choreProvider.hasSchedule = false; // No schedule
 
       await tester.pumpWidget(createTestWidget(choreProvider));
 
-      expect(find.text("No chores assigned yet.\nTap + to create a schedule."), findsOneWidget);
+      expect(find.text("No chores assigned yet.\nTap + to create a schedule."),
+          findsOneWidget);
     });
 
-    testWidgets('Shows schedule when chores exist', (WidgetTester tester) async {
+    testWidgets('Shows schedule when chores exist',
+        (WidgetTester tester) async {
       final choreProvider = ChoreProvider();
       choreProvider.hasSchedule = true;
       choreProvider.setChoreName("Household Cleaning");
@@ -761,7 +768,8 @@ void main() {
       expect(find.text("Bob: Dishes"), findsOneWidget);
     });
 
-    testWidgets('Navigates to AssignChoresPage when FAB is clicked', (WidgetTester tester) async {
+    testWidgets('Navigates to AssignChoresPage when FAB is clicked',
+        (WidgetTester tester) async {
       final choreProvider = ChoreProvider();
       await tester.pumpWidget(createTestWidget(choreProvider));
 
@@ -770,6 +778,5 @@ void main() {
 
       expect(find.byType(AssignChoresPage), findsOneWidget);
     });
-
   });
 }

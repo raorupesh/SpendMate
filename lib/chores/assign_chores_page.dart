@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spendmate/providers/chores_provider.dart';
 import 'package:spendmate/chores/chores_details_page.dart';
+import 'package:spendmate/providers/chores_provider.dart';
 
 class AssignChoresPage extends StatefulWidget {
   const AssignChoresPage({super.key});
@@ -12,13 +12,25 @@ class AssignChoresPage extends StatefulWidget {
 
 class _AssignChoresPageState extends State<AssignChoresPage> {
   final TextEditingController _choreNameController = TextEditingController();
-  final TextEditingController _participantNameController = TextEditingController();
+  final TextEditingController _participantNameController =
+      TextEditingController();
   final List<String> participants = [];
   final List<String> daysOfWeek = [
-    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday"
   ];
   final List<String> tasks = [
-    "Cleaning", "Dishes", "Cooking", "Laundry", "Trash", "Other"
+    "Cleaning",
+    "Dishes",
+    "Cooking",
+    "Laundry",
+    "Trash",
+    "Other"
   ];
   Map<String, Map<String, String>> directAssignments = {};
 
@@ -50,7 +62,8 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
                 Expanded(
                   child: TextField(
                     controller: _participantNameController,
-                    decoration: const InputDecoration(hintText: "Enter participant name"),
+                    decoration: const InputDecoration(
+                        hintText: "Enter participant name"),
                   ),
                 ),
                 IconButton(
@@ -73,7 +86,9 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
             if (participants.isNotEmpty) ...[
               Wrap(
                 spacing: 8.0,
-                children: participants.map((name) => Chip(label: Text(name))).toList(),
+                children: participants
+                    .map((name) => Chip(label: Text(name)))
+                    .toList(),
               ),
               const SizedBox(height: 16),
             ],
@@ -82,7 +97,8 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
             if (participants.length < 2)
               const Text(
                 "At least 2 participants are required.",
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+                style:
+                    TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
               ),
 
             // Assign Chores
@@ -92,7 +108,8 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
               Center(
                 child: ElevatedButton(
                   onPressed: () {
-                    if (directAssignments.values.any((dayMap) => dayMap.isEmpty)) {
+                    if (directAssignments.values
+                        .any((dayMap) => dayMap.isEmpty)) {
                       setState(() {
                         choreProvider.showError = true;
                       });
@@ -101,7 +118,8 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
                       choreProvider.generateSchedule();
                       Navigator.pushReplacement(
                         context,
-                        MaterialPageRoute(builder: (context) => const ChoresDetailsPage()),
+                        MaterialPageRoute(
+                            builder: (context) => const ChoresDetailsPage()),
                       );
                     }
                   },
@@ -124,7 +142,9 @@ class _AssignChoresPageState extends State<AssignChoresPage> {
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 8),
           child: ExpansionTile(
-            title: Text(person, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            title: Text(person,
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
             children: daysOfWeek.map((day) {
               return ListTile(
                 title: Text(day),

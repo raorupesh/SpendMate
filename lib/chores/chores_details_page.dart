@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:spendmate/providers/chores_provider.dart';
 import 'package:spendmate/chores/assign_chores_page.dart';
-import 'package:spendmate/user_section/profile_page.dart';
+import 'package:spendmate/providers/chores_provider.dart';
 
 class ChoresDetailsPage extends StatelessWidget {
   const ChoresDetailsPage({super.key});
@@ -59,10 +58,12 @@ class ChoresDetailsPage extends StatelessWidget {
         children: [
           Text(
             "Chore: ${choreProvider.choreName}",
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal),
+            style: const TextStyle(
+                fontSize: 22, fontWeight: FontWeight.bold, color: Colors.teal),
           ),
           const SizedBox(height: 10),
-          Text("Schedule for $currentMonth", style: const TextStyle(fontSize: 18)),
+          Text("Schedule for $currentMonth",
+              style: const TextStyle(fontSize: 18)),
           const Divider(),
           Expanded(child: _buildChoreList(choreProvider)),
         ],
@@ -98,7 +99,8 @@ class ChoresDetailsPage extends StatelessWidget {
         }
       });
 
-      if (taskWidgets.isNotEmpty) { // Show only days with assigned tasks
+      if (taskWidgets.isNotEmpty) {
+        // Show only days with assigned tasks
         dayWidgets.add(
           Card(
             margin: const EdgeInsets.symmetric(vertical: 6),
@@ -110,7 +112,10 @@ class ChoresDetailsPage extends StatelessWidget {
                 children: [
                   Text(
                     day,
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.teal),
+                    style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.teal),
                   ),
                   const Divider(),
                   Column(children: taskWidgets),
@@ -125,10 +130,10 @@ class ChoresDetailsPage extends StatelessWidget {
     return dayWidgets.isNotEmpty
         ? ListView(children: dayWidgets)
         : const Center(
-      child: Text(
-        "No tasks assigned.",
-        style: TextStyle(color: Colors.grey, fontSize: 16),
-      ),
-    );
+            child: Text(
+              "No tasks assigned.",
+              style: TextStyle(color: Colors.grey, fontSize: 16),
+            ),
+          );
   }
 }
