@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:spendmate/validations/credential_validation_page.dart'; // Import the shared validation logic
+import 'package:spendmate/validations/credential_validation_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,24 +11,20 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController fullNameController = TextEditingController();
 
   bool isLoginEnabled = false;
   String emailErrorMessage = '';
   String passwordErrorMessage = '';
-  bool emailFocused = false; // To track if the email field is interacted with
-  bool passwordFocused =
-      false; // To track if the password field is interacted with
+  bool emailFocused = false;
+  bool passwordFocused = false;
+  bool _obscurePassword = true; // Added to toggle password visibility
 
-  // This function is used to trigger setState and update the login button state
   void updateButtonState(Function callback) {
     setState(() {
-      isLoginEnabled =
-          callback(); // We call the callback from validateFields to set the state
+      isLoginEnabled = callback();
     });
   }
 
-  // Function to update the error messages
   void updateErrorMessages(String emailError, String passwordError) {
     setState(() {
       emailErrorMessage = emailError;
@@ -36,155 +32,195 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  // Method to handle back navigation (prevent going back to previous pages)
-  Future<bool> _onWillPop() async {
-    // Disable back button press
-    return Future.value(false); // This prevents the back navigation
-  }
+  Future<bool> _onWillPop() async => Future.value(false);
 
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
-      onWillPop: _onWillPop, // Prevent back navigation
+      onWillPop: _onWillPop,
       child: Scaffold(
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
+        backgroundColor: Colors.white, // Changed background color
+        body: SafeArea( // Added SafeArea for better device compatibility
+          child: Center(
             child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: <Widget>[
-                  const SizedBox(height: 30),
                   Center(
-                    child: Text(
-                      'SpendMate',
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
+                    child: Image.asset(
+                      'assets/icons/app_icon.png', // Update with your actual asset path
+                      width: 120,
+                      height: 120,
+                    ),
+                  ),
+                  const SizedBox(height: 30),
+
+                  Text(
+                    'Welcome Back!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.teal.shade800,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Email Input Field with Enhanced Design
+                  _buildInputField(
+                    controller: emailController,
+                    labelText: 'Email',
+                    hintText: 'Enter your email',
+                    keyboardType: TextInputType.emailAddress,
+                    errorMessage: emailErrorMessage,
+                    isFocused: emailFocused,
+                    onChanged: (_) => validateFields(
+                      emailController,
+                      passwordController,
+                      updateButtonState: updateButtonState,
+                      updateErrorMessages: updateErrorMessages,
+                      isSignUp: false,
+                    ),
+                    onTap: () => setState(() => emailFocused = true),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Password Input Field with Visibility Toggle
+                  _buildInputField(
+                    controller: passwordController,
+                    labelText: 'Password',
+                    hintText: 'Enter your password',
+                    obscureText: _obscurePassword,
+                    errorMessage: passwordErrorMessage,
+                    isFocused: passwordFocused,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.teal.shade600,
                       ),
+                      onPressed: () {
+                        setState(() {
+                          _obscurePassword = !_obscurePassword;
+                        });
+                      },
                     ),
+                    onChanged: (_) => validateFields(
+                      emailController,
+                      passwordController,
+                      updateButtonState: updateButtonState,
+                      updateErrorMessages: updateErrorMessages,
+                      isSignUp: false,
+                    ),
+                    onTap: () => setState(() => passwordFocused = true),
                   ),
-                  const SizedBox(height: 40),
 
-                  // Email Input Field
-                  TextField(
-                    controller: emailController,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      labelStyle: TextStyle(color: Colors.teal.shade700),
-                      filled: true,
-                      fillColor: Colors.teal.shade50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    keyboardType: TextInputType.emailAddress,
-                    style: TextStyle(color: Colors.teal.shade900),
-                    onChanged: (_) {
-                      validateFields(
-                        emailController,
-                        passwordController,
-                        updateButtonState: updateButtonState,
-                        updateErrorMessages: updateErrorMessages,
-                        isSignUp: false, // It's login, not sign-up
-                      );
-                    },
-                    onTap: () {
-                      setState(() {
-                        emailFocused = true; // Mark email field as focused
-                      });
-                    },
-                  ),
-                  if (emailFocused && emailErrorMessage.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          emailErrorMessage,
-                          style: TextStyle(color: Colors.red, fontSize: 14),
+                  // Forgot Password Link
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        // TODO: Implement forgot password functionality
+                      },
+                      child: Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: Colors.teal.shade600,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                  const SizedBox(height: 20),
-
-                  // Password Input Field
-                  TextField(
-                    controller: passwordController,
-                    decoration: InputDecoration(
-                      labelText: 'Password',
-                      labelStyle: TextStyle(color: Colors.teal.shade700),
-                      filled: true,
-                      fillColor: Colors.teal.shade50,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide.none,
-                      ),
-                    ),
-                    obscureText: true,
-                    style: TextStyle(color: Colors.teal.shade900),
-                    onChanged: (_) {
-                      validateFields(
-                        emailController,
-                        passwordController,
-                        updateButtonState: updateButtonState,
-                        updateErrorMessages: updateErrorMessages,
-                        isSignUp: false, // It's login, not sign-up
-                      );
-                    },
-                    onTap: () {
-                      setState(() {
-                        passwordFocused =
-                            true; // Mark password field as focused
-                      });
-                    },
                   ),
-                  if (passwordFocused && passwordErrorMessage.isNotEmpty)
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          passwordErrorMessage,
-                          style: TextStyle(color: Colors.red, fontSize: 14),
+                  const SizedBox(height: 24),
+
+                  // Login Button with Gradient and Elevation
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Colors.teal.shade400,
+                          Colors.teal.shade600,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.teal.shade200,
+                          blurRadius: 10,
+                          offset: const Offset(0, 5),
+                        ),
+                      ],
+                    ),
+                    child: ElevatedButton(
+                      onPressed: isLoginEnabled
+                          ? () {
+                        Navigator.pushReplacementNamed(context, '/');
+                      }
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 50,
+                            vertical: 15
+                        ),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30)
+                        ),
+                      ),
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
-                  const SizedBox(height: 30),
-
-                  // Login Button
-                  ElevatedButton(
-                    onPressed: isLoginEnabled
-                        ? () {
-                            Navigator.pushReplacementNamed(
-                                context, '/'); // Navigate to the home page
-                          }
-                        : null,
-                    // Disable the button if fields are empty or invalid
-                    child: const Text('Login'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal.shade300,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 40, vertical: 15),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30)),
-                      textStyle:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                  // Sign-Up Button
-                  TextButton(
-                    onPressed: () {
-                      Navigator.pushReplacementNamed(context, '/signup');
-                    },
-                    child: const Text(
-                      'Don\'t have an account? Sign Up',
-                      style: TextStyle(color: Colors.teal, fontSize: 16),
+                  // Divider with "or" text
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: Colors.teal.shade200)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          'or',
+                          style: TextStyle(color: Colors.teal.shade600),
+                        ),
+                      ),
+                      Expanded(child: Divider(color: Colors.teal.shade200)),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Sign-Up Navigation
+                  Center(
+                    child: TextButton(
+                      onPressed: () {
+                        // Navigate to the sign-up page
+                        Navigator.pushReplacementNamed(context, '/signup');
+                      },
+                      child: RichText(
+                        text: TextSpan(
+                          text: 'Don\'t have an account? ',
+                          style: TextStyle(color: Colors.teal.shade700),
+                          children: [
+                            TextSpan(
+                              text: 'Sign Up',
+                              style: TextStyle(
+                                color: Colors.teal.shade600,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -193,6 +229,59 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
+    );
+  }
+
+  // Custom Input Field Widget
+  Widget _buildInputField({
+    required TextEditingController controller,
+    required String labelText,
+    String hintText = '',
+    TextInputType keyboardType = TextInputType.text,
+    bool obscureText = false,
+    String errorMessage = '',
+    bool isFocused = false,
+    Widget? suffixIcon,
+    Function(String)? onChanged,
+    Function()? onTap,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          controller: controller,
+          decoration: InputDecoration(
+            labelText: labelText,
+            hintText: hintText,
+            labelStyle: TextStyle(color: Colors.teal.shade700),
+            hintStyle: TextStyle(color: Colors.teal.shade300),
+            filled: true,
+            fillColor: Colors.teal.shade50,
+            suffixIcon: suffixIcon,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.teal.shade600, width: 2),
+            ),
+          ),
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          style: TextStyle(color: Colors.teal.shade900),
+          onChanged: onChanged,
+          onTap: onTap,
+        ),
+        if (isFocused && errorMessage.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 12),
+            child: Text(
+              errorMessage,
+              style: TextStyle(color: Colors.red, fontSize: 12),
+            ),
+          ),
+      ],
     );
   }
 }

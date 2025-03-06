@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:intl_phone_field/intl_phone_field.dart'; // For phone number input with country code
+import 'package:intl_phone_field/intl_phone_field.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -15,14 +15,14 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController phoneController = TextEditingController();
 
   bool isSignUpEnabled = false;
+  bool _obscurePassword = true;
   String fullNameErrorMessage = '';
   String emailErrorMessage = '';
   String passwordErrorMessage = '';
   String phoneErrorMessage = '';
 
-  // Function to validate full name
-  bool validateFullName() {
-    if (fullNameController.text.isEmpty) {
+  bool validateFullName(String value) {
+    if (value.isEmpty) {
       fullNameErrorMessage = 'Full name is required.';
       return false;
     } else {
@@ -32,12 +32,12 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   // Function to validate email
-  bool validateEmail() {
-    if (emailController.text.isEmpty) {
+  bool validateEmail(String value) {
+    if (value.isEmpty) {
       emailErrorMessage = 'Email is required.';
       return false;
     } else if (!RegExp(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-        .hasMatch(emailController.text)) {
+        .hasMatch(value)) {
       emailErrorMessage = 'Please enter a valid email.';
       return false;
     } else {
@@ -47,11 +47,11 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   // Function to validate password
-  bool validatePassword() {
-    if (passwordController.text.isEmpty) {
+  bool validatePassword(String value) {
+    if (value.isEmpty) {
       passwordErrorMessage = 'Password is required.';
       return false;
-    } else if (passwordController.text.length < 6) {
+    } else if (value.length < 6) {
       passwordErrorMessage = 'Password must be at least 6 characters.';
       return false;
     } else {
@@ -61,11 +61,11 @@ class _SignUpPageState extends State<SignUpPage> {
   }
 
   // Function to validate phone number (only numbers)
-  bool validatePhoneNumber() {
-    if (phoneController.text.isEmpty) {
+  bool validatePhoneNumber(String value) {
+    if (value.isEmpty) {
       phoneErrorMessage = 'Phone number is required.';
       return false;
-    } else if (!RegExp(r"^\d+$").hasMatch(phoneController.text)) {
+    } else if (!RegExp(r"^\d+$").hasMatch(value)) {
       // Ensures only numbers are entered
       phoneErrorMessage = 'Phone number must contain only numbers.';
       return false;
@@ -77,25 +77,241 @@ class _SignUpPageState extends State<SignUpPage> {
 
   // Method to handle field validation
   void validateFields() {
-    bool isFullNameValid = validateFullName();
-    bool isEmailValid = validateEmail();
-    bool isPasswordValid = validatePassword();
-    bool isPhoneValid = validatePhoneNumber();
+    setState(() {
+      // Validate each field
+      bool isFullNameValid = validateFullName(fullNameController.text);
+      bool isEmailValid = validateEmail(emailController.text);
+      bool isPasswordValid = validatePassword(passwordController.text);
+      bool isPhoneValid = validatePhoneNumber(phoneController.text);
 
-    // Only update the state if the widget is still mounted
-    if (mounted) {
-      setState(() {
-        isSignUpEnabled =
-            isFullNameValid && isEmailValid && isPasswordValid && isPhoneValid;
-      });
-    }
+      // Update sign up button state
+      isSignUpEnabled = isFullNameValid &&
+          isEmailValid &&
+          isPasswordValid &&
+          isPhoneValid;
+    });
+  }
+
+  // Existing validation methods remain the same as in the previous implementation
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.teal.shade600),
+          onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const SizedBox(height: 30),
+                Center(
+                  child: Text(
+                    'Create Account',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.teal.shade700,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+
+                // Full Name Input
+                _buildInputSection(
+                  label: 'Full Name',
+                  child: TextField(
+                    controller: fullNameController,
+                    decoration: _inputDecoration(
+                      labelText: 'Enter your full name',
+                      prefixIcon: Icons.person_outline,
+                    ),
+                    keyboardType: TextInputType.name,
+                  ),
+                  errorMessage: fullNameErrorMessage,
+                ),
+
+                // Phone Number Input
+                _buildInputSection(
+                  label: 'Phone Number',
+                  child: IntlPhoneField(
+                    controller: phoneController,
+                    decoration: _inputDecoration(
+                      labelText: 'Enter your phone number',
+                      prefixIcon: Icons.phone_outlined,
+                    ),
+                    initialCountryCode: 'US',
+                    keyboardType: TextInputType.phone,
+                  ),
+                  errorMessage: phoneErrorMessage,
+                ),
+
+                // Email Input
+                _buildInputSection(
+                  label: 'Email',
+                  child: TextField(
+                    controller: emailController,
+                    decoration: _inputDecoration(
+                      labelText: 'Enter your email',
+                      prefixIcon: Icons.email_outlined,
+                    ),
+                    keyboardType: TextInputType.emailAddress,
+                  ),
+                  errorMessage: emailErrorMessage,
+                ),
+
+                // Password Input
+                _buildInputSection(
+                  label: 'Password',
+                  child: TextField(
+                    controller: passwordController,
+                    decoration: _inputDecoration(
+                      labelText: 'Enter your password',
+                      prefixIcon: Icons.lock_outline,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.teal.shade600,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
+                    ),
+                    obscureText: _obscurePassword,
+                  ),
+                  errorMessage: passwordErrorMessage,
+                ),
+
+                const SizedBox(height: 30),
+
+                // Sign Up Button
+                ElevatedButton(
+                  onPressed: isSignUpEnabled
+                      ? () {
+                    // Add your sign up logic here
+                    Navigator.pushReplacementNamed(context, '/login');
+                  }
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal.shade600,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text(
+                    'Sign Up',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Login redirect
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'Already have an account? ',
+                      style: TextStyle(color: Colors.black54),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+                      child: Text(
+                        'Login',
+                        style: TextStyle(
+                          color: Colors.teal.shade600,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Helper method for consistent input decoration
+  InputDecoration _inputDecoration({
+    required String labelText,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    return InputDecoration(
+      labelText: labelText,
+      prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.teal.shade600) : null,
+      suffixIcon: suffixIcon,
+      filled: true,
+      fillColor: Colors.teal.shade50,
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.teal.shade100, width: 1),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.teal.shade600, width: 2),
+      ),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+    );
+  }
+
+  // Helper method to build input sections with labels and error messages
+  Widget _buildInputSection({
+    required String label,
+    required Widget child,
+    required String errorMessage,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        child,
+        if (errorMessage.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0, left: 12),
+            child: Text(
+              errorMessage,
+              style: TextStyle(color: Colors.red.shade700, fontSize: 12),
+            ),
+          ),
+        const SizedBox(height: 16),
+      ],
+    );
   }
 
   @override
   void initState() {
     super.initState();
-
-    // Call validateFields after widget initialization (not in the constructor)
+    // Call validateFields after widget initialization
     fullNameController.addListener(validateFields);
     emailController.addListener(validateFields);
     passwordController.addListener(validateFields);
@@ -109,182 +325,5 @@ class _SignUpPageState extends State<SignUpPage> {
     passwordController.dispose();
     phoneController.dispose();
     super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        Navigator.pushReplacementNamed(context, '/login');
-        return Future.value(false);
-      },
-      child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const SizedBox(height: 50),
-                Center(
-                  child: Text(
-                    'Sign Up',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.teal.shade600,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 50),
-                // Full Name Input Field
-                const Text(
-                  'Full Name',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: fullNameController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.teal.shade50,
-                    labelText: 'Enter your full name',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  keyboardType: TextInputType.name,
-                ),
-                if (fullNameErrorMessage.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        fullNameErrorMessage,
-                        style: TextStyle(color: Colors.red, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                // Phone Number Input Field with Country Code
-                const Text(
-                  'Phone Number',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                IntlPhoneField(
-                  controller: phoneController,
-                  decoration: InputDecoration(
-                    labelText: 'Enter your phone number',
-                    filled: true,
-                    fillColor: Colors.teal.shade50,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  initialCountryCode: 'US',
-                  keyboardType: TextInputType.phone,
-                ),
-                if (phoneErrorMessage.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        phoneErrorMessage,
-                        style: TextStyle(color: Colors.red, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                // Email Input Field
-                const Text(
-                  'Email',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.teal.shade50,
-                    labelText: 'Enter your email',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                ),
-                if (emailErrorMessage.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        emailErrorMessage,
-                        style: TextStyle(color: Colors.red, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 16),
-                // Password Input Field
-                const Text(
-                  'Password',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: passwordController,
-                  decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.teal.shade50,
-                    labelText: 'Enter your password',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                  obscureText: true,
-                ),
-                if (passwordErrorMessage.isNotEmpty)
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text(
-                        passwordErrorMessage,
-                        style: TextStyle(color: Colors.red, fontSize: 14),
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 20),
-                // Sign Up Button (Only enabled when valid)
-                ElevatedButton(
-                  onPressed: isSignUpEnabled
-                      ? () {
-                          Navigator.pushReplacementNamed(context, '/login');
-                        }
-                      : null,
-                  child: const Text('Sign Up'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 40, vertical: 15),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30)),
-                    backgroundColor: Colors.teal.shade500,
-                    textStyle: const TextStyle(
-                        fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
   }
 }
