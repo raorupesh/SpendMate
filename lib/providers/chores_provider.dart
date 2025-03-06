@@ -1,10 +1,10 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 
 class ChorePlan {
-  String choreName;
-  List<String> participants;
-  Map<String, Map<String, String>> directAssignments;
-  Map<String, Map<String, String>> finalSchedule;
+  final String choreName;
+  final List<String> participants;
+  final Map<String, Map<String, String>> directAssignments;
+  final Map<String, dynamic> finalSchedule;
 
   ChorePlan({
     required this.choreName,
@@ -14,25 +14,29 @@ class ChorePlan {
   });
 }
 
-class ChoreProvider with ChangeNotifier {
-  List<ChorePlan> chorePlans = [];
-  int? selectedPlanIndex;
+class ChoreProvider extends ChangeNotifier {
+  final List<ChorePlan> _chorePlans = [];
 
-  void addChorePlan(ChorePlan chorePlan) {
-    chorePlans.add(chorePlan);
+  List<ChorePlan> get chorePlans => _chorePlans;
+
+  void addChorePlan(ChorePlan plan) {
+    _chorePlans.add(plan);
     notifyListeners();
   }
 
-  void removeChorePlan(int index) {
-    chorePlans.removeAt(index);
-    notifyListeners();
+  // Delete a chore plan
+  void deleteChorePlan(int index) {
+    if (index >= 0 && index < _chorePlans.length) {
+      _chorePlans.removeAt(index);
+      notifyListeners();
+    }
   }
 
-  void setSelectedPlan(int index) {
-    selectedPlanIndex = index;
-    notifyListeners();
+  // Get a specific chore plan
+  ChorePlan? getChorePlan(int index) {
+    if (index >= 0 && index < _chorePlans.length) {
+      return _chorePlans[index];
+    }
+    return null;
   }
-
-  ChorePlan? get selectedPlan =>
-      selectedPlanIndex != null ? chorePlans[selectedPlanIndex!] : null;
 }

@@ -1,194 +1,128 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:spendmate/groups/select_participants_page.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/transactions/split_method_page.dart';
 
-class AddTransactionPage extends StatefulWidget {
-  final String groupName;
+class SplitMethodPage extends StatefulWidget {
+  final String splitMethod;
+  final ValueChanged<Map<String, dynamic>> onSave;
 
-  const AddTransactionPage({super.key, required this.groupName});
+  const SplitMethodPage(
+      {super.key, required this.splitMethod, required this.onSave});
 
   @override
-  _AddTransactionPageState createState() => _AddTransactionPageState();
+  _SplitMethodPageState createState() => _SplitMethodPageState();
 }
 
-class _AddTransactionPageState extends State<AddTransactionPage> {
-  final _descriptionController = TextEditingController();
-  final _amountController = TextEditingController();
-  DateTime _transactionDate = DateTime.now();
-  String? _splitMethod;
-  Set<String> _selectedParticipants = {};
-  Map<String, double> _participantShares = {};
-  bool isSaveEnabled = false;
+class _SplitMethodPageState extends State<SplitMethodPage> {
+  final TextEditingController _customController = TextEditingController();
+  final TextEditingController _percentageController = TextEditingController();
+  late String selectedMethod;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedMethod = widget.splitMethod;
+  }
+
+  @override
+  void dispose() {
+    _customController.dispose();
+    _percentageController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final group =
-        Provider.of<GroupProvider>(context).getGroup(widget.groupName);
-    List<String> groupMembers = group.members;
-
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add Transaction"),
+        title: const Text("Select Split Method"),
         backgroundColor: Colors.teal,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              controller: _descriptionController,
-              decoration:
-                  const InputDecoration(labelText: 'Transaction Description'),
-              onChanged: (_) => validateFields(),
-            ),
-            TextField(
-              controller: _amountController,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,2}$'))
-              ],
-              decoration: const InputDecoration(labelText: 'Amount'),
-              onChanged: (_) => validateFields(),
-            ),
-            const SizedBox(height: 16),
-
-            // Button to Select Participants (Opens new selection screen)
             ListTile(
-              title: const Text("Participants"),
-              subtitle: Text(_selectedParticipants.isNotEmpty
-                  ? _selectedParticipants.join(", ")
-                  : "Select participants"),
-              trailing: const Icon(Icons.person_add),
-              onTap: () async {
-                final selected = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SelectParticipantsPage(
-                      members: groupMembers,
-                      selectedParticipants: _selectedParticipants.toList(),
-                    ),
-                  ),
-                );
-                if (selected != null) {
-                  setState(() {
-                    _selectedParticipants =
-                        Set.from(selected); // Prevents duplicates
-                    // Recalculate split with the selected participants
-                    if (_splitMethod != null) {
-                      _participantShares =
-                          _calculateSplit({"method": _splitMethod});
-                    }
-                  });
-                }
-              },
+              title: const Text("Equal Split"),
+              leading: Radio<String>(
+                value: "Equal",
+                groupValue: selectedMethod,
+                onChanged: (value) {
+                  setState(() => selectedMethod = value!);
+                },
+              ),
             ),
-
-            const SizedBox(height: 16),
             ListTile(
-              title: const Text("Split Method"),
-              subtitle: Text(_splitMethod ?? "Select split method"),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SplitMethodPage(
-                      splitMethod: _splitMethod ?? "Equal",
-                      onSave: (splitData) {
-                        try {
-                          setState(() {
-                            _splitMethod = splitData['method'];
-                            _participantShares = _calculateSplit(splitData);
-                            validateFields();
-                          });
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(e.toString())),
-                          );
-                        }
-                      },
-                    ),
-                  ),
-                );
-              },
+              title: const Text("Custom Split"),
+              leading: Radio<String>(
+                value: "Custom",
+                groupValue: selectedMethod,
+                onChanged: (value) {
+                  setState(() => selectedMethod = value!);
+                },
+              ),
             ),
-
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: isSaveEnabled
-                  ? () {
-                      final amount = double.tryParse(_amountController.text);
-                      if (amount != null &&
-                          _descriptionController.text.isNotEmpty) {
-                        try {
-                          final transaction = Transaction(
-                            description: _descriptionController.text.trim(),
-                            amount: amount,
-                            date: _transactionDate,
-                            participantShares: _participantShares,
-                          );
-                          Provider.of<GroupProvider>(context, listen: false)
-                              .addTransaction(widget.groupName, transaction);
-                          Navigator.pop(context);
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text(e.toString())),
-                          );
-                        }
-                      }
-                    }
-                  : null,
-              child: const Text("Save Transaction"),
+            if (selectedMethod == "Custom")
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: TextField(
+                  controller: _customController,
+                  keyboardType: TextInputType.text,
+                  decoration: const InputDecoration(
+                    labelText: "Enter custom amounts (comma separated)",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            ListTile(
+              title: const Text("Percentage Split"),
+              leading: Radio<String>(
+                value: "Percentage",
+                groupValue: selectedMethod,
+                onChanged: (value) {
+                  setState(() => selectedMethod = value!);
+                },
+              ),
+            ),
+            if (selectedMethod == "Percentage")
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                child: TextField(
+                  controller: _percentageController,
+                  keyboardType: TextInputType.text,
+                  decoration: const InputDecoration(
+                    labelText: "Enter percentages (comma separated)",
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ),
+            const SizedBox(height: 20),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: ElevatedButton(
+                onPressed: () {
+                  Map<String, dynamic> splitData = {
+                    "method": selectedMethod,
+                    "values": selectedMethod == "Custom"
+                        ? _customController.text
+                        : selectedMethod == "Percentage"
+                        ? _percentageController.text
+                        : "",
+                  };
+                  widget.onSave(splitData);
+                  Navigator.pop(context);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.teal,
+                  padding: const EdgeInsets.symmetric(vertical: 12.0),
+                ),
+                child: const Text("Save Split Method",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
             ),
           ],
         ),
       ),
     );
-  }
-
-  void validateFields() {
-    setState(() {
-      final isDescriptionValid = _descriptionController.text.isNotEmpty;
-      final isAmountValid = _amountController.text.isNotEmpty &&
-          RegExp(r'^\d+(\.\d{0,2})?$').hasMatch(_amountController.text);
-      final isSplitMethodSelected = _splitMethod != null;
-      isSaveEnabled =
-          isDescriptionValid && isAmountValid && isSplitMethodSelected;
-    });
-  }
-
-  Map<String, double> _calculateSplit(Map<String, dynamic> splitData) {
-    double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
-    Map<String, double> shares = {};
-
-    if (splitData['method'] == "Equal") {
-      double splitAmount = totalAmount / _selectedParticipants.length;
-      for (var participant in _selectedParticipants) {
-        shares[participant] = splitAmount;
-      }
-    } else if (splitData['method'] == "Custom") {
-      List<String> amounts = splitData['values'].split(',');
-      double totalCustomAmount = 0.0;
-      for (int i = 0; i < _selectedParticipants.length; i++) {
-        double amount = double.parse(amounts[i]);
-        shares[_selectedParticipants.elementAt(i)] = amount;
-        totalCustomAmount += amount;
-      }
-      if (totalCustomAmount != totalAmount) {
-        throw Exception("Custom amounts do not add up to the total amount.");
-      }
-    } else if (splitData['method'] == "Percentage") {
-      List<String> percentages = splitData['values'].split(',');
-      for (int i = 0; i < _selectedParticipants.length; i++) {
-        shares[_selectedParticipants.elementAt(i)] =
-            (double.parse(percentages[i]) / 100) * totalAmount;
-      }
-    }
-
-    return shares;
   }
 }

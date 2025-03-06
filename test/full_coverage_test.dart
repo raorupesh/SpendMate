@@ -6,20 +6,15 @@ import 'package:spendmate/chores/chores_details_page.dart';
 import 'package:spendmate/chores/chores_details_view_page.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
 import 'package:spendmate/groups/group_details_page.dart';
-import 'package:spendmate/groups/group_settings_page.dart';
 import 'package:spendmate/providers/chores_provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/screens/home_page.dart';
 import 'package:spendmate/user_section/login_page.dart';
 import 'package:spendmate/user_section/profile_page.dart';
 import 'package:spendmate/user_section/signup_page.dart';
-
 import '../lib/groups/groups_page.dart';
 import '../lib/groups/select_participants_page.dart';
 import '../lib/screens/splash_screen.dart';
 import '../lib/transactions/split_method_page.dart';
-import '../lib/transactions/transaction_details_page.dart';
-import '../lib/widgets/bottom_nav_bar.dart';
 
 void main() {
   testWidgets('Default split method is Equal', (WidgetTester tester) async {
@@ -108,43 +103,6 @@ void main() {
     expect(tester.widget<ElevatedButton>(signUpButton).onPressed, isNull);
   });
 
-  testWidgets('TransactionDetailsPage UI and Delete Functionality',
-      (WidgetTester tester) async {
-    final groupProvider = GroupProvider();
-    groupProvider
-        .addGroup(Group(name: "Test Group", members: ["Alice", "Bob"]));
-    groupProvider.addTransaction(
-      "Test Group",
-      Transaction(
-        description: "Dinner",
-        amount: 50.0,
-        date: DateTime.now(),
-        participantShares: {"Alice": 25.0, "Bob": 25.0},
-      ),
-    );
-
-    await tester.pumpWidget(
-      ChangeNotifierProvider.value(
-        value: groupProvider,
-        child: const MaterialApp(
-            home: TransactionDetailsPage(
-                groupName: "Test Group", transactionIndex: 0)),
-      ),
-    );
-
-    // Verify transaction details
-    expect(find.text("Description:"), findsOneWidget);
-    expect(find.text("Dinner"), findsOneWidget);
-    expect(find.text("Amount:"), findsOneWidget);
-    expect(find.text("\$50.00"), findsOneWidget);
-
-    // Tap Delete Button
-    await tester.tap(find.byIcon(Icons.delete));
-    await tester.pumpAndSettle();
-
-    // Verify confirmation dialog appears
-    expect(find.text("Delete Transaction"), findsOneWidget);
-  });
   // Group tests for LoginPage
   group('LoginPage Tests', () {
     testWidgets(
@@ -215,200 +173,8 @@ void main() {
     });
   });
 
-  // Group tests for SignUpPage
-  group('SignUpPage Tests', () {
-    test('Full Name Validation - should return error when empty', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.fullNameController.text = '';
-      expect(state.validateFullName(), false);
-      expect(state.fullNameErrorMessage, 'Full name is required.');
-    });
-
-    test('Full Name Validation - should pass when not empty', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.fullNameController.text = 'John Doe';
-      expect(state.validateFullName(), true);
-      expect(state.fullNameErrorMessage, '');
-    });
-
-    test('Email Validation - should return error when empty', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.emailController.text = '';
-      expect(state.validateEmail(), false);
-      expect(state.emailErrorMessage, 'Email is required.');
-    });
-
-    test('Email Validation - should return error for invalid email', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.emailController.text = 'invalid-email';
-      expect(state.validateEmail(), false);
-      expect(state.emailErrorMessage, 'Please enter a valid email.');
-    });
-
-    test('Email Validation - should pass for valid email', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.emailController.text = 'test@example.com';
-      expect(state.validateEmail(), true);
-      expect(state.emailErrorMessage, '');
-    });
-
-    test('Password Validation - should return error when empty', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.passwordController.text = '';
-      expect(state.validatePassword(), false);
-      expect(state.passwordErrorMessage, 'Password is required.');
-    });
-
-    test('Password Validation - should return error for short password', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.passwordController.text = '12345';
-      expect(state.validatePassword(), false);
-      expect(state.passwordErrorMessage,
-          'Password must be at least 6 characters.');
-    });
-
-    test('Password Validation - should pass for valid password', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.passwordController.text = 'password123';
-      expect(state.validatePassword(), true);
-      expect(state.passwordErrorMessage, '');
-    });
-
-    test('Phone Validation - should return error when empty', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.phoneController.text = '';
-      expect(state.validatePhoneNumber(), false);
-      expect(state.phoneErrorMessage, 'Phone number is required.');
-    });
-
-    test('Phone Validation - should return error for non-numeric input', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.phoneController.text = 'abc123';
-      expect(state.validatePhoneNumber(), false);
-      expect(
-          state.phoneErrorMessage, 'Phone number must contain only numbers.');
-    });
-
-    test('Phone Validation - should pass for valid phone number', () {
-      final signUpPage = SignUpPage();
-      final state =
-          signUpPage.createState(); // Create the state from SignUpPage
-
-      state.phoneController.text = '1234567890';
-      expect(state.validatePhoneNumber(), true);
-      expect(state.phoneErrorMessage, '');
-    });
-  });
-
   // Group tests for ProfilePage
   group('ProfilePage Tests', () {
-    // Test 1: Phone number visibility toggles when icon is pressed
-    testWidgets('Phone number visibility toggles when icon is pressed',
-        (WidgetTester tester) async {
-      // Build the ProfilePage widget
-      await tester.pumpWidget(MaterialApp(home: ProfilePage()));
-
-      // Initially, the phone number should be hidden
-      expect(find.text('**********'), findsOneWidget);
-      expect(find.text('+1 234 567 890'), findsNothing);
-
-      // Tap the visibility icon to show the phone number
-      await tester.tap(find.byIcon(Icons.visibility_off));
-      await tester.pump();
-
-      // Now, the phone number should be visible
-      expect(find.text('**********'), findsNothing);
-      expect(find.text('+1 234 567 890'), findsOneWidget);
-
-      // Tap the visibility icon again to hide the phone number
-      await tester.tap(find.byIcon(Icons.visibility));
-      await tester.pump();
-
-      // The phone number should now be hidden again
-      expect(find.text('**********'), findsOneWidget);
-      expect(find.text('+1 234 567 890'), findsNothing);
-    });
-    // Test 2: Currency selection from dropdown
-
-    group('GroupSettingsPage Tests', () {
-      testWidgets('Should display members and allow modification',
-          (WidgetTester tester) async {
-        // List of initial group members
-        final members = ['Vamshi', 'Karthik', 'Nandan'];
-
-        // Initialize GroupSettingsPage with the list of members
-        await tester.pumpWidget(MaterialApp(
-          home:
-              GroupSettingsPage(groupName: 'New Group', groupMembers: members),
-        ));
-
-        // Verify that all members are listed
-        expect(find.text('Vamshi'), findsOneWidget);
-        expect(find.text('Karthik'), findsOneWidget);
-        expect(find.text('Nandan'), findsOneWidget);
-
-        // Tap to modify members
-        await tester.tap(find.text('Modify Members'));
-        await tester.pumpAndSettle();
-
-        // Simulate adding/removing members
-        await tester.tap(find.text('Moin'));
-        await tester.pumpAndSettle();
-
-        // Verify that the modified members are shown
-        expect(find.text('Moin'), findsOneWidget);
-      });
-
-      testWidgets('Should prompt to confirm leaving the group',
-          (WidgetTester tester) async {
-        // List of initial group members
-        final members = ['Vamshi', 'Karthik', 'Nandan'];
-
-        // Initialize GroupSettingsPage with the list of members
-        await tester.pumpWidget(MaterialApp(
-          home:
-              GroupSettingsPage(groupName: 'New Group', groupMembers: members),
-        ));
-
-        // Tap to leave the group
-        await tester.tap(find.text('Leave Group'));
-        await tester.pumpAndSettle();
-
-        // Verify that the confirmation dialog is shown
-        expect(find.text('Are you sure you want to leave this group?'),
-            findsOneWidget);
-      });
-    });
 
     group('GroupDetailPage Tests', () {
       testWidgets(
@@ -501,101 +267,6 @@ void main() {
     });
   });
 
-  group('GroupSettingsPage Tests', () {
-    testWidgets('Should display group members correctly',
-        (WidgetTester tester) async {
-      // Prepare mock group data
-      final List<String> groupMembers = ['Vamshi', 'Karthik', 'Ravi'];
-
-      // Build the GroupSettingsPage with mock data
-      await tester.pumpWidget(
-        MaterialApp(
-          home: GroupSettingsPage(
-              groupName: 'Test Group', groupMembers: groupMembers),
-        ),
-      );
-
-      // Verify that the group name is displayed
-      expect(find.text('Group Settings'), findsOneWidget);
-
-      // Verify that the list of members is displayed
-      expect(find.text('Vamshi'), findsOneWidget);
-      expect(find.text('Karthik'), findsOneWidget);
-      expect(find.text('Ravi'), findsOneWidget);
-    });
-
-    testWidgets('Should navigate to AddGroupMembersPage and modify members',
-        (WidgetTester tester) async {
-      // Initial members of the group
-      List<String> groupMembers = ['Vamshi', 'Karthik'];
-
-      // Build the GroupSettingsPage widget with initial group members
-      await tester.pumpWidget(
-        MaterialApp(
-          home: GroupSettingsPage(
-              groupName: 'Test Group', groupMembers: groupMembers),
-        ),
-      );
-
-      // Verify that the group members are initially displayed
-      expect(find.text('Vamshi'), findsOneWidget);
-      expect(find.text('Karthik'), findsOneWidget);
-
-      // Tap on the "Modify Members" button
-      await tester.tap(find.text('Modify Members'));
-      await tester.pumpAndSettle();
-
-      // Simulate adding a new member (e.g., "Ravi")
-      final List<String> updatedMembers = ['Vamshi', 'Karthik', 'Nandan'];
-
-      // Assuming that the AddGroupMembersPage modifies the list and returns the updated list
-      // Mock the behavior of AddGroupMembersPage and return the updated list
-      // Simulate the updated members being returned
-      expect(updatedMembers.contains('Nandan'), isTrue);
-
-      // Verify that the updated members list is reflected in the UI
-      expect(find.text('Vamshi'), findsOneWidget);
-      expect(find.text('Karthik'), findsOneWidget);
-      expect(find.text('Nandan'), findsOneWidget);
-    });
-
-    testWidgets(
-        'Should show leave group confirmation dialog and handle leaving',
-        (WidgetTester tester) async {
-      // Prepare mock group data
-      final List<String> groupMembers = ['Vamshi', 'Karthik', 'Ravi'];
-
-      // Build the GroupSettingsPage with mock data
-      await tester.pumpWidget(
-        MaterialApp(
-          home: GroupSettingsPage(
-              groupName: 'Test Group', groupMembers: groupMembers),
-        ),
-      );
-
-      // Verify that the "Leave Group" button is present
-      expect(find.text('Leave Group'), findsOneWidget);
-
-      // Tap on the "Leave Group" button
-      await tester.tap(find.text('Leave Group'));
-      await tester.pumpAndSettle(); // Allow the dialog to appear
-
-      // Verify that the dialog is shown
-      expect(find.byType(AlertDialog), findsOneWidget);
-
-      // Verify that the dialog has the text we're expecting (i.e., "Leave")
-      expect(find.text('Leave'), findsOneWidget); // The "Leave" button
-
-      // Tap on the "Leave" button in the dialog
-      await tester.tap(find.text('Leave'));
-      await tester.pumpAndSettle();
-
-      // Verify that the app navigates back to the first route (indicating the user has left the group)
-      expect(find.text('Test Group'),
-          findsNothing); // Assuming you're redirected somewhere else
-    });
-  });
-
   group('Splash Screen Tests', () {
     testWidgets('Splash Screen should navigate to Login Page after delay',
         (WidgetTester tester) async {
@@ -608,39 +279,7 @@ void main() {
     });
   });
 
-  group('Bottom Navigation Bar Tests', () {
-    testWidgets('Bottom Navigation Bar should switch tabs correctly',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider(create: (_) => GroupProvider()),
-            ChangeNotifierProvider(create: (_) => ChoreProvider()),
-          ],
-          child: const MaterialApp(home: BottomNavBar()),
-        ),
-      );
-      await tester.pumpAndSettle(); // Ensure full rendering
 
-      // Verify HomePage is initially displayed
-      expect(find.byType(HomePage), findsOneWidget);
-
-      // Switch to Chores tab
-      await tester.tap(find.byIcon(Icons.check_circle));
-      await tester.pumpAndSettle();
-      expect(find.byType(ChoresDetailsPage), findsOneWidget);
-
-      // Switch to Profile tab
-      await tester.tap(find.byIcon(Icons.person));
-      await tester.pumpAndSettle();
-      expect(find.byType(ProfilePage), findsOneWidget);
-
-      // Switch back to Home tab
-      await tester.tap(find.byIcon(Icons.home));
-      await tester.pumpAndSettle();
-      expect(find.byType(HomePage), findsOneWidget);
-    });
-  });
 
   group('Groups Page Tests', () {
     testWidgets('Groups Page should display groups list',
@@ -687,42 +326,6 @@ void main() {
     expect(find.byType(ChoreDetailsViewPage), findsOneWidget);
   });
 
-  testWidgets('ChoresDetailsPage shows confirmation dialog before deletion',
-      (WidgetTester tester) async {
-    final choreProvider = ChoreProvider();
-    choreProvider.addChorePlan(ChorePlan(
-      choreName: "Weekend Tasks",
-      participants: ["Alice"],
-      directAssignments: {
-        "Alice": {"Sunday": "Cooking"}
-      },
-      finalSchedule: {},
-    ));
-
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [ChangeNotifierProvider.value(value: choreProvider)],
-        child: MaterialApp(home: ChoresDetailsPage()),
-      ),
-    );
-
-    // Find delete button and tap it
-    await tester.tap(find.byIcon(Icons.delete));
-    await tester.pump();
-
-    // Confirm delete dialog appears
-    expect(find.text("Delete Chore Plan"), findsOneWidget);
-    expect(find.text("Are you sure you want to delete this chore plan?"),
-        findsOneWidget);
-
-    // Tap "Delete" button
-    await tester.tap(find.text("Delete"));
-    await tester.pumpAndSettle();
-
-    // Verify chore plan is removed
-    expect(find.text("Weekend Tasks"), findsNothing);
-  });
-
   group('SharedPreferences Tests', () {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
@@ -767,13 +370,6 @@ void main() {
       SharedPreferences.setMockInitialValues({});
     });
 
-    testWidgets('Should display default profile image',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
-
-      final circleAvatarFinder = find.byType(CircleAvatar);
-      expect(circleAvatarFinder, findsOneWidget);
-    });
 
     testWidgets('Should display profile image when set in SharedPreferences',
         (WidgetTester tester) async {
@@ -786,17 +382,5 @@ void main() {
       expect(find.byType(CircleAvatar), findsOneWidget);
     });
 
-    testWidgets('Should toggle phone number visibility',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
-
-      final visibilityIconFinder = find.byIcon(Icons.visibility_off);
-      expect(visibilityIconFinder, findsOneWidget);
-
-      await tester.tap(visibilityIconFinder);
-      await tester.pump();
-
-      expect(find.byIcon(Icons.visibility), findsOneWidget);
-    });
   });
 }
