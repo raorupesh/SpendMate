@@ -46,14 +46,41 @@ class AuthService {
     required String password,
   }) async {
     try {
-      return await _auth.signInWithEmailAndPassword(
+      final userCredential = await _auth.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+
+      // Get the user document from Firestore
+      final userDoc = await _firestore.collection('users')
+          .doc(userCredential.user!.uid)
+          .get();
+
+      // If no document exists, create one with basic details
+      if (!userDoc.exists) {
+        await _firestore.collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'fullName': userCredential.user!.displayName ?? 'User',
+          'email': userCredential.user!.email ?? '',
+          'phoneNumber': userCredential.user!.phoneNumber ?? '',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _handleAuthException(e);
+    } catch (e) {
+      // Handle specific Pigeon error case
+      if (e.toString().contains('PigeonUserDetails')) {
+        print('Caught Pigeon error, but authentication was successful');
+        throw 'Authentication successful but encountered an app error. Please restart the app.';
+      }
+      throw 'An unexpected error occurred: $e';
     }
   }
+
 
   // Reset password
   Future<void> resetPassword(String email) async {
@@ -70,14 +97,32 @@ class AuthService {
   }
 
   // Get user details
+// In your firebase_authentication_service.dart file
   Future<Map<String, dynamic>?> getUserDetails() async {
-    if (currentUser == null) return null;
-
     try {
-      DocumentSnapshot doc = await _firestore.collection('users').doc(currentUser!.uid).get();
-      return doc.data() as Map<String, dynamic>?;
+      // Get the current user
+      final user = FirebaseAuth.instance.currentUser;
+
+      if (user == null) {
+        print('No authenticated user found');
+        return null;
+      }
+
+      // Get the user document from Firestore
+      final docSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      if (docSnapshot.exists) {
+        print('User document found: ${docSnapshot.data()}');
+        return docSnapshot.data();
+      } else {
+        print('User document does not exist for uid: ${user.uid}');
+        return null;
+      }
     } catch (e) {
-      print('Error getting user details: $e');
+      print('Error fetching user details: $e');
       return null;
     }
   }

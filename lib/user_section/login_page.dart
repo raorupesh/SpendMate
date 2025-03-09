@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:spendmate/user_section/forgot_password_page.dart';
 import 'package:spendmate/validations/credential_validation_page.dart';
 import '../firebase_authentication_service.dart';
 
@@ -45,16 +46,42 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
+      print('Attempting login with email: ${emailController.text.trim()}');
+
       await _authService.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
-      // Navigate to home on successful login
-      if (mounted) {
-        Navigator.pushReplacementNamed(context, '/');
+      // Check if we're actually logged in despite potential PigeonUserDetails error
+      if (_authService.currentUser != null) {
+        print('Login successful despite potential error: ${_authService.currentUser?.uid}');
+
+        // Navigate to home on successful login
+        if (mounted) {
+          Navigator.pushReplacementNamed(context, '/');
+        }
+        return;
       }
+
+      // If we reach here, we didn't get a successful login
+      throw 'Login failed - please try again';
+
     } catch (error) {
+      print('Login error details: $error');
+
+      // Special handling for the Pigeon error
+      if (error.toString().contains('PigeonUserDetails')) {
+        // If we know the user is actually authenticated despite the error
+        if (_authService.currentUser != null) {
+          // Navigate anyway since the user is logged in
+          if (mounted) {
+            Navigator.pushReplacementNamed(context, '/');
+          }
+          return;
+        }
+      }
+
       setState(() {
         generalErrorMessage = error.toString();
       });
@@ -197,10 +224,14 @@ class _LoginPageState extends State<LoginPage> {
                   ),
 
                   // Forgot Password Link
+// Forgot Password Link
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: _resetPassword,
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                            context, MaterialPageRoute(builder: (context) => const ForgotPasswordPage()));
+                      },
                       child: Text(
                         'Forgot Password?',
                         style: TextStyle(
@@ -210,6 +241,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                   ),
+
                   const SizedBox(height: 24),
 
                   // Login Button with Gradient and Elevation
