@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
+import '../firebase_authentication_service.dart';
 
 class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
@@ -13,13 +14,17 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool isSignUpEnabled = false;
+  bool isLoading = false;
   bool _obscurePassword = true;
   String fullNameErrorMessage = '';
   String emailErrorMessage = '';
   String passwordErrorMessage = '';
   String phoneErrorMessage = '';
+  String generalErrorMessage = '';
+  String completePhoneNumber = '';
 
   bool validateFullName(String value) {
     if (value.isEmpty) {
@@ -31,7 +36,6 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  // Function to validate email
   bool validateEmail(String value) {
     if (value.isEmpty) {
       emailErrorMessage = 'Email is required.';
@@ -46,7 +50,6 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  // Function to validate password
   bool validatePassword(String value) {
     if (value.isEmpty) {
       passwordErrorMessage = 'Password is required.';
@@ -60,13 +63,11 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  // Function to validate phone number (only numbers)
   bool validatePhoneNumber(String value) {
     if (value.isEmpty) {
       phoneErrorMessage = 'Phone number is required.';
       return false;
     } else if (!RegExp(r"^\d+$").hasMatch(value)) {
-      // Ensures only numbers are entered
       phoneErrorMessage = 'Phone number must contain only numbers.';
       return false;
     } else {
@@ -75,16 +76,13 @@ class _SignUpPageState extends State<SignUpPage> {
     }
   }
 
-  // Method to handle field validation
   void validateFields() {
     setState(() {
-      // Validate each field
       bool isFullNameValid = validateFullName(fullNameController.text);
       bool isEmailValid = validateEmail(emailController.text);
       bool isPasswordValid = validatePassword(passwordController.text);
       bool isPhoneValid = validatePhoneNumber(phoneController.text);
 
-      // Update sign up button state
       isSignUpEnabled = isFullNameValid &&
           isEmailValid &&
           isPasswordValid &&
@@ -92,7 +90,44 @@ class _SignUpPageState extends State<SignUpPage> {
     });
   }
 
-  // Existing validation methods remain the same as in the previous implementation
+  Future<void> _signUp() async {
+    setState(() {
+      isLoading = true;
+      generalErrorMessage = '';
+    });
+
+    try {
+      await _authService.signUpWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+        fullName: fullNameController.text.trim(),
+        phoneNumber: completePhoneNumber.isNotEmpty
+            ? completePhoneNumber
+            : phoneController.text.trim(),
+      );
+
+      // Navigate to login page on successful signup
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Account created successfully! Please log in.'),
+            backgroundColor: Colors.teal,
+          ),
+        );
+        Navigator.pushReplacementNamed(context, '/login');
+      }
+    } catch (error) {
+      setState(() {
+        generalErrorMessage = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -125,6 +160,22 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
                 const SizedBox(height: 30),
 
+                // Display general error message if any
+                if (generalErrorMessage.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    margin: const EdgeInsets.only(bottom: 15),
+                    decoration: BoxDecoration(
+                      color: Colors.red.shade50,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: Colors.red.shade300),
+                    ),
+                    child: Text(
+                      generalErrorMessage,
+                      style: TextStyle(color: Colors.red.shade700),
+                    ),
+                  ),
+
                 // Full Name Input
                 _buildInputSection(
                   label: 'Full Name',
@@ -135,6 +186,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       prefixIcon: Icons.person_outline,
                     ),
                     keyboardType: TextInputType.name,
+                    onChanged: (_) => validateFields(),
                   ),
                   errorMessage: fullNameErrorMessage,
                 ),
@@ -150,6 +202,11 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                     initialCountryCode: 'US',
                     keyboardType: TextInputType.phone,
+                    onChanged: (phone) {
+                      // Save complete phone number with country code
+                      completePhoneNumber = phone.completeNumber;
+                      validateFields();
+                    },
                   ),
                   errorMessage: phoneErrorMessage,
                 ),
@@ -164,6 +221,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       prefixIcon: Icons.email_outlined,
                     ),
                     keyboardType: TextInputType.emailAddress,
+                    onChanged: (_) => validateFields(),
                   ),
                   errorMessage: emailErrorMessage,
                 ),
@@ -191,6 +249,7 @@ class _SignUpPageState extends State<SignUpPage> {
                       ),
                     ),
                     obscureText: _obscurePassword,
+                    onChanged: (_) => validateFields(),
                   ),
                   errorMessage: passwordErrorMessage,
                 ),
@@ -199,12 +258,7 @@ class _SignUpPageState extends State<SignUpPage> {
 
                 // Sign Up Button
                 ElevatedButton(
-                  onPressed: isSignUpEnabled
-                      ? () {
-                    // Add your sign up logic here
-                    Navigator.pushReplacementNamed(context, '/login');
-                  }
-                      : null,
+                  onPressed: isSignUpEnabled && !isLoading ? _signUp : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.teal.shade600,
                     padding: const EdgeInsets.symmetric(vertical: 16),
@@ -212,7 +266,16 @@ class _SignUpPageState extends State<SignUpPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  child: const Text(
+                  child: isLoading
+                      ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2,
+                    ),
+                  )
+                      : const Text(
                     'Sign Up',
                     style: TextStyle(
                       fontSize: 18,
@@ -243,6 +306,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 30),
               ],
             ),
           ),
@@ -306,16 +370,6 @@ class _SignUpPageState extends State<SignUpPage> {
         const SizedBox(height: 16),
       ],
     );
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // Call validateFields after widget initialization
-    fullNameController.addListener(validateFields);
-    emailController.addListener(validateFields);
-    passwordController.addListener(validateFields);
-    phoneController.addListener(validateFields);
   }
 
   @override

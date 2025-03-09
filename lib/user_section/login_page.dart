@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:spendmate/validations/credential_validation_page.dart';
+import '../firebase_authentication_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,13 +12,16 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
 
   bool isLoginEnabled = false;
+  bool isLoading = false;
   String emailErrorMessage = '';
   String passwordErrorMessage = '';
+  String generalErrorMessage = '';
   bool emailFocused = false;
   bool passwordFocused = false;
-  bool _obscurePassword = true; // Added to toggle password visibility
+  bool _obscurePassword = true;
 
   void updateButtonState(Function callback) {
     setState(() {
@@ -34,13 +38,71 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<bool> _onWillPop() async => Future.value(false);
 
+  Future<void> _login() async {
+    setState(() {
+      isLoading = true;
+      generalErrorMessage = '';
+    });
+
+    try {
+      await _authService.signInWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
+
+      // Navigate to home on successful login
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/');
+      }
+    } catch (error) {
+      setState(() {
+        generalErrorMessage = error.toString();
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _resetPassword() async {
+    final String email = emailController.text.trim();
+
+    if (email.isEmpty) {
+      setState(() {
+        emailErrorMessage = 'Please enter your email to reset password';
+      });
+      return;
+    }
+
+    try {
+      await _authService.resetPassword(email);
+
+      // Show confirmation dialog
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Password reset email sent to $email'),
+            backgroundColor: Colors.teal,
+          ),
+        );
+      }
+    } catch (error) {
+      setState(() {
+        generalErrorMessage = error.toString();
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        backgroundColor: Colors.white, // Changed background color
-        body: SafeArea( // Added SafeArea for better device compatibility
+        backgroundColor: Colors.white,
+        body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -50,7 +112,7 @@ class _LoginPageState extends State<LoginPage> {
                 children: <Widget>[
                   Center(
                     child: Image.asset(
-                      'assets/icons/app_icon.png', // Update with your actual asset path
+                      'assets/icons/app_icon.png',
                       width: 120,
                       height: 120,
                     ),
@@ -68,7 +130,23 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Email Input Field with Enhanced Design
+                  // Display general error message if any
+                  if (generalErrorMessage.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      margin: const EdgeInsets.only(bottom: 15),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.red.shade300),
+                      ),
+                      child: Text(
+                        generalErrorMessage,
+                        style: TextStyle(color: Colors.red.shade700),
+                      ),
+                    ),
+
+                  // Email Input Field
                   _buildInputField(
                     controller: emailController,
                     labelText: 'Email',
@@ -87,7 +165,7 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Password Input Field with Visibility Toggle
+                  // Password Input Field
                   _buildInputField(
                     controller: passwordController,
                     labelText: 'Password',
@@ -122,9 +200,7 @@ class _LoginPageState extends State<LoginPage> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      onPressed: () {
-                        // TODO: Implement forgot password functionality
-                      },
+                      onPressed: _resetPassword,
                       child: Text(
                         'Forgot Password?',
                         style: TextStyle(
@@ -155,10 +231,8 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                     child: ElevatedButton(
-                      onPressed: isLoginEnabled
-                          ? () {
-                        Navigator.pushReplacementNamed(context, '/');
-                      }
+                      onPressed: isLoginEnabled && !isLoading
+                          ? _login
                           : null,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.transparent,
@@ -171,7 +245,16 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(30)
                         ),
                       ),
-                      child: Text(
+                      child: isLoading
+                          ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          strokeWidth: 2,
+                        ),
+                      )
+                          : const Text(
                         'Login',
                         style: TextStyle(
                           fontSize: 18,
