@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:spendmate/models/chore_plan_model.dart';
 import 'package:spendmate/providers/chores_provider.dart';
 
 class ChoreDetailsViewPage extends StatelessWidget {

@@ -199,20 +199,7 @@ class _GroupsPageState extends State<GroupsPage> {
         elevation: 0,
         centerTitle: false,
         iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {
-              // Implement search functionality
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.filter_list, color: Colors.white),
-            onPressed: () {
-              // Implement filter functionality
-            },
-          ),
-        ],
+        automaticallyImplyLeading: false,
       ),
       body: Consumer<GroupProvider>(
         builder: (context, groupProvider, child) {

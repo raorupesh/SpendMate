@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/chores/assign_chores_page.dart';
 import 'package:spendmate/chores/chores_details_view_page.dart';
+import 'package:spendmate/models/chore_plan_model.dart';
 import 'package:spendmate/providers/chores_provider.dart';
 
 class ChoresDetailsPage extends StatelessWidget {
@@ -13,6 +14,7 @@ class ChoresDetailsPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text("Chore Plans"),
         backgroundColor: Colors.teal,
+        automaticallyImplyLeading: false,
       ),
       body: Consumer<ChoreProvider>(
         builder: (context, choreProvider, child) {
@@ -26,27 +28,6 @@ class ChoresDetailsPage extends StatelessWidget {
                   const Text(
                     "No chore plans available",
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "Tap the + button to create one",
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton.icon(
-                    icon: const Icon(Icons.add),
-                    label: const Text("Create Chore Plan"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    ),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const AssignChoresPage()),
-                      );
-                    },
                   ),
                 ],
               ),
@@ -106,7 +87,7 @@ class ChoresDetailsPage extends StatelessWidget {
                                       TextButton(
                                         child: const Text("Delete", style: TextStyle(color: Colors.red)),
                                         onPressed: () {
-                                          choreProvider.deleteChorePlan(index);
+                                          choreProvider.deleteChorePlan(plan.id); // Use plan.id instead of index
                                           Navigator.pop(context);
                                         },
                                       ),
@@ -164,7 +145,18 @@ class ChoresDetailsPage extends StatelessWidget {
               );
             },
           );
+
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AssignChoresPage()),
+          );
+        },
+        backgroundColor: Colors.teal,
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
