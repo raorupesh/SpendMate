@@ -38,12 +38,11 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<void> _loadAllData() async {
     try {
-      // Load profile preferences
+
       final imagePath = await SharedPrefsHelper.getProfileImage();
       final currency = await SharedPrefsHelper.getCurrency() ?? 'USD';
       final timezone = await SharedPrefsHelper.getTimezone() ?? 'PST';
 
-      // Load user data from Firestore
       final userData = await _authService.getUserDetails();
 
       if (mounted) {
@@ -53,7 +52,7 @@ class _ProfilePageState extends State<ProfilePage> {
           _selectedCurrency = currency;
           _selectedTimezone = timezone;
 
-          // User data from Firestore
+
           if (userData != null) {
             _fullName = userData['fullName'] ?? 'User';
             _email = userData['email'] ?? 'example@email.com';

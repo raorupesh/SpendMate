@@ -204,6 +204,26 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
               ),
               const SizedBox(height: 16),
 
+              // Paid By Dropdown
+              DropdownButtonFormField<String>(
+                value: _paidBy,
+                decoration: const InputDecoration(
+                  labelText: 'Paid By',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.person),
+                ),
+                items: _groupMembers.map((String member) {
+                  return DropdownMenuItem<String>(
+                    value: member,
+                    child: Text(member),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  if (newValue != null) setState(() => _paidBy = newValue);
+                },
+              ),
+              const SizedBox(height: 16),
+
               // Split Method Button (Box Format)
               InkWell(
                 onTap: () async {
@@ -233,37 +253,37 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
               ),
               const SizedBox(height: 16),
 
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
-            onPressed: () async {
-              if (_formKey.currentState!.validate()) {
-                _calculateShares();
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    _calculateShares();
 
-                if (_groupId != null) {
-                  await Provider.of<TransactionProvider>(context, listen: false).addTransaction(
-                    _groupId!,
-                    _descriptionController.text,
-                    double.parse(_amountController.text),
-                    _paidBy,
-                    _selectedDate,
-                    _participantShares,
-                    _selectedCategory,
-                  );
+                    if (_groupId != null) {
+                      await Provider.of<TransactionProvider>(context, listen: false).addTransaction(
+                        _groupId!,
+                        _descriptionController.text,
+                        double.parse(_amountController.text),
+                        _paidBy,
+                        _selectedDate,
+                        _participantShares,
+                        _selectedCategory,
+                      );
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Transaction saved successfully!")),
-                  );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Transaction saved successfully!")),
+                      );
 
-                  Navigator.pop(context);
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Error: Group ID not found!")),
-                  );
-                }
-              }
-            },
-            child: const Text('Save Transaction', style: TextStyle(fontSize: 16)),
-          ),
+                      Navigator.pop(context);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Error: Group ID not found!")),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Save Transaction', style: TextStyle(fontSize: 16)),
+              ),
             ],
           ),
         ),

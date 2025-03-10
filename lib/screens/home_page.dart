@@ -1,155 +1,130 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:spendmate/screens/settlle_up_page.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Sample data for owings
-    final List<Map<String, dynamic>> owings = [
-      {'name': 'Alice', 'amount': 50.00},
-      {'name': 'Bob', 'amount': 100.00},
-      {'name': 'Charlie', 'amount': 25.50},
-    ];
+  _HomePageState createState() => _HomePageState();
+}
 
-    return WillPopScope(
-      onWillPop: () async {
-        SystemNavigator.pop();
-        return Future.value(false);
-      },
-      child: Scaffold(
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, Colors.blue.shade100],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+class _HomePageState extends State<HomePage> {
+  double totalOwings = 0.0;
+  double totalIOwe = 0.0;
+  bool isLoading = true;
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFinancialSummary();
+  }
+
+  Future<void> _fetchFinancialSummary() async {
+    setState(() => isLoading = true);
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+
+    double owingsSum = 0.0;
+    double iOweSum = 0.0;
+
+    // Fetch all transactions
+    final transactions = await _firestore.collection('transactions').get();
+
+    for (var doc in transactions.docs) {
+      final data = doc.data();
+      String paidBy = data['paidBy'];
+      Map<String, dynamic> participantShares = data['participantShares'] ?? {};
+
+      if (paidBy == 'You')
+      {
+        // People Owe Me: Sum of participant shares when I paid
+        participantShares.forEach((key, value) {
+          if(key != 'You') {
+            owingsSum += (value as num).toDouble();
+          }
+        });
+      }
+      else
+      {
+        // I Owe: Sum of transactions where I am in participant shares
+        iOweSum += (participantShares['You'] as num).toDouble();
+      }
+    }
+
+    setState(() {
+      totalOwings = owingsSum;
+      totalIOwe = iOweSum;
+      isLoading = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final netBalance = totalOwings - totalIOwe;
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('SpendMate',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchFinancialSummary,
           ),
-          padding: const EdgeInsets.all(16.0),
-          child: SafeArea(
-            child: Column(
+        ],
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: isDarkMode
+                ? [Colors.grey.shade900, Colors.black87]
+                : [Colors.white, Colors.blue.shade50],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 20),
-                const Text(
-                  'Owings Section',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black87,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Current Balance:',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const Text(
-                          '\$2,500.00',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w700,
-                            color: Colors.teal,
-                          ),
-                        ),
-                      ],
+                _buildNetBalanceCard(netBalance),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSummaryCard(
+                        "People Owe Me",
+                        totalOwings,
+                        Icons.arrow_downward,
+                        Colors.green,
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Owings:',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: owings.length,
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                              title: Text(owings[index]['name']),
-                              trailing: Text(
-                                  '\$${owings[index]['amount'].toStringAsFixed(2)}'),
-                            );
-                          },
-                        ),
-                      ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _buildSummaryCard(
+                        "I Owe Others",
+                        totalIOwe,
+                        Icons.arrow_upward,
+                        Colors.redAccent,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Recent Transactions:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.black87,
-                  ),
-                ),
-                Expanded(
-                  child: Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListView.separated(
-                      itemCount: 4,
-                      separatorBuilder: (context, index) =>
-                      const Divider(height: 1, color: Colors.grey),
-                      itemBuilder: (context, index) {
-                        return const [
-                          TransactionCard(
-                              title: 'Direct Transfer',
-                              amount: 500.00,
-                              icon: Icons.shopping_cart),
-                          TransactionCard(
-                              title: 'Groceries',
-                              amount: -50.00,
-                              icon: Icons.shopping_cart),
-                          TransactionCard(
-                              title: 'Bus Ticket',
-                              amount: -2.50,
-                              icon: Icons.directions_bus),
-                          TransactionCard(
-                              title: 'Dinner',
-                              amount: -30.00,
-                              icon: Icons.restaurant),
-                        ][index];
-                      },
-                    ),
-                  ),
-                ),
+                const Spacer(),
+                _buildSettleUpButton(context),
               ],
             ),
           ),
@@ -157,64 +132,129 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-}
 
-// ... (TransactionCard and ActionButton remain the same)
-
-class TransactionCard extends StatelessWidget {
-  const TransactionCard({
-    required this.title,
-    required this.amount,
-    required this.icon,
-    super.key,
-  });
-
-  final String title;
-  final double amount;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListTile(
-      leading: Icon(icon, color: Colors.teal),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(amount < 0 ? 'Expense' : 'Income',
-          style: const TextStyle(fontSize: 12)),
-      trailing: Text(
-        '\$${amount.toStringAsFixed(2)}',
-        style: TextStyle(
-          color: amount < 0 ? Colors.redAccent : Colors.green,
-          fontWeight: FontWeight.w600,
+  Widget _buildNetBalanceCard(double netBalance) {
+    final isPositive = netBalance >= 0;
+    return Card(
+      elevation: 8,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20.0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          gradient: LinearGradient(
+            colors: isPositive
+                ? [Colors.teal.shade300, Colors.teal.shade600]
+                : [Colors.orange.shade300, Colors.red.shade500],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Net Balance',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Text(
+                  '\$${netBalance.abs().toStringAsFixed(2)}',
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  isPositive ? Icons.trending_up : Icons.trending_down,
+                  color: Colors.white,
+                ),
+                const Spacer(),
+                Text(
+                  isPositive ? 'You\'re owed' : 'You owe',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
     );
   }
-}
 
-class ActionButton extends StatelessWidget {
-  const ActionButton({
-    required this.label,
-    required this.icon,
-    required this.onPressed,
-    super.key,
-  });
+  Widget _buildSummaryCard(String title, double amount, IconData icon, Color color) => Card(
+    elevation: 4,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color.withOpacity(0.8), size: 18),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color.withOpacity(0.8),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '\$${amount.toStringAsFixed(2)}',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 
-  final String label;
-  final IconData icon;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon, size: 20, color: Colors.white),
-      label: Text(label, style: const TextStyle(color: Colors.white)),
+  Widget _buildSettleUpButton(BuildContext context) => SizedBox(
+    width: double.infinity,
+    height: 54,
+    child: ElevatedButton.icon(
+      onPressed: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => SettleUpPage()),
+      ),
+      icon: const Icon(Icons.handshake, color: Colors.white),
+      label: const Text(
+        "SETTLE UP",
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
+        ),
+      ),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.teal,
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 4,
       ),
-    );
-  }
+    ),
+  );
 }

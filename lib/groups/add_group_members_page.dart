@@ -10,7 +10,7 @@ class AddGroupMembersPage extends StatefulWidget {
 }
 
 class _AddGroupMembersPageState extends State<AddGroupMembersPage> {
-  final List<String> friends = ['Vamshi', 'Karthik', 'Nandan', 'Moin'];
+  final List<String> friends = ['Chloe','Vamshi', 'Karthik', 'Nandan', 'Moin','Anurag','Rayan'];
   late Set<String> selectedFriends;
 
   @override
