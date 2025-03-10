@@ -89,9 +89,61 @@ class _ProfilePageState extends State<ProfilePage> {
     await _loadAllData();
   }
 
-  Future<void> _pickImage() async {
+  // Method to show image source selection dialog
+  Future<void> _showImageSourceDialog() async {
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Select Image Source'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                GestureDetector(
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.camera_alt, color: Colors.teal),
+                        SizedBox(width: 10),
+                        Text('Take a photo'),
+                      ],
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _getImage(ImageSource.camera);
+                  },
+                ),
+                const Divider(),
+                GestureDetector(
+                  child: const Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Icon(Icons.photo_library, color: Colors.teal),
+                        SizedBox(width: 10),
+                        Text('Choose from gallery'),
+                      ],
+                    ),
+                  ),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _getImage(ImageSource.gallery);
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // Method to get image from camera or gallery
+  Future<void> _getImage(ImageSource source) async {
     final ImagePicker picker = ImagePicker();
-    final XFile? pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await picker.pickImage(source: source);
 
     if (pickedFile != null) {
       await SharedPrefsHelper.saveProfileImage(pickedFile.path);
@@ -158,7 +210,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         backgroundColor: Colors.grey.shade200,
                       ),
                       InkWell(
-                        onTap: _pickImage,
+                        onTap: _showImageSourceDialog,
                         child: Container(
                           decoration: const BoxDecoration(
                             color: Colors.teal,
