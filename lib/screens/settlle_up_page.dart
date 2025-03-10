@@ -1,98 +1,162 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:spendmate/screens/payments_history_page.dart';
 
-  import 'package:flutter/material.dart';
-  import 'package:cloud_firestore/cloud_firestore.dart';
-  import 'package:firebase_auth/firebase_auth.dart';
-  import 'package:spendmate/screens/payments_history_page.dart';
+class SettleUpPage extends StatefulWidget {
+  const SettleUpPage({super.key});
 
-  class SettleUpPage extends StatefulWidget {
-    const SettleUpPage({super.key});
+  @override
+  _SettleUpPageState createState() => _SettleUpPageState();
+}
 
-    @override
-    _SettleUpPageState createState() => _SettleUpPageState();
+class _SettleUpPageState extends State<SettleUpPage> {
+  final _auth = FirebaseAuth.instance;
+  final _firestore = FirebaseFirestore.instance;
+  List<Map<String, dynamic>> _debts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDebts();
   }
 
-  class _SettleUpPageState extends State<SettleUpPage> {
-    final _auth = FirebaseAuth.instance;
-    final _firestore = FirebaseFirestore.instance;
-    List<Map<String, dynamic>> _debts = [];
-    bool _isLoading = true;
+  /// Fetch unsettled transactions
+  Future<void> _fetchDebts() async {
+    setState(() => _isLoading = true);
 
-    @override
-    void initState() {
-      super.initState();
-      _fetchDebts();
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) {
+      setState(() => _isLoading = false);
+      return;
     }
 
+    try {
+      final transactions = await _firestore.collection('transactions')
+          .where('isSettled', isEqualTo: false).get();
+      Map<String, double> debts = {};
 
-    void _showSettleDialog(String recipientId, String name, double amount) {
-      showModalBottomSheet(
-        context: context,
-        isScrollControlled: true,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        builder: (context) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 20,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Settle with $name',
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Amount: \$${amount.toStringAsFixed(2)}',
-                style: const TextStyle(fontSize: 18),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => _settleDebt(recipientId, amount),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.teal,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
-                    ),
-                    child: const Text('Confirm Payment'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
+      for (var doc in transactions.docs) {
+        final data = doc.data();
+        String paidBy = data['paidBy'];
+        Map<String, dynamic> participantShares = data['participantShares'] ?? {};
+        if (paidBy != 'You' && participantShares.containsKey('You')) {
+          double amountOwed = (participantShares['You'] as num).toDouble();
+
+          if (debts.containsKey(paidBy)) {
+            debts[paidBy] = debts[paidBy]! + amountOwed;
+          } else {
+            debts[paidBy] = amountOwed;
+          }
+        }
+      }
+
+      setState(() {
+        _debts = debts.entries
+            .map((entry) => {
+          'id': entry.key,
+          'name': entry.key, // PaidBy contains the name of the person
+          'amount': entry.value
+        })
+            .toList();
+        _isLoading = false;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error loading debts: $e')),
       );
+      setState(() => _isLoading = false);
     }
+  }
 
-    Future<void> _settleDebt(String recipientId, double amount) async {
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) return;
 
-      try {
-        await _firestore.collection('transactions').add({
-          'description': 'Debt Settled',
-          'amount': amount,
-          'paidBy': userId, // The user who paid
-          'participantShares': {recipientId: -amount}, // Negative indicates payment
-          'date': Timestamp.now(),
-          'splitMethod': 'Payment',
-          'isSettlement': true,
-        });
+  void _showSettleDialog(String recipientId, String name, double amount) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+          left: 16,
+          right: 16,
+          top: 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Settle with $name',
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Amount: \$${amount.toStringAsFixed(2)}',
+              style: const TextStyle(fontSize: 18),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                ),
+                ElevatedButton(
+                  onPressed: () => _settleDebt(recipientId, amount),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.teal,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                  ),
+                  child: const Text('Confirm Payment'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _settleDebt(String recipientId, double amount) async {
+    final userId = _auth.currentUser?.uid;
+    if (userId == null) return;
+    try {
+      // Fetch the transaction where `paidBy` is the recipient and `isSettled` is false
+      final transactions = await _firestore
+          .collection('transactions')
+          .where('paidBy', isEqualTo: recipientId)
+          .where('isSettled', isEqualTo: false)
+          .get();
+
+      if (transactions.docs.isNotEmpty) {
+        for (var doc in transactions.docs) {
+          await _firestore.collection('transactions').doc(doc.id).update({
+            'isSettled': true,
+          });
+
+          await _firestore.collection('settled_transactions').add({
+            'description':'Debt Settled',
+            'amount':amount,
+            'debtClearedBy':'You',
+            'paidTo':recipientId,
+            'date':Timestamp.now(),
+          });
+
+        }
+
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment recorded successfully!')),
+        );
 
         await _fetchDebts(); // Refresh debts
 
@@ -103,103 +167,62 @@
             MaterialPageRoute(builder: (context) => const PaymentHistoryPage()),
           );
         }
-
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment recorded successfully!')),
-        );
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to record payment: $e')),
+          const SnackBar(content: Text('No unsettled transaction found for this payment.')),
         );
       }
-    }
-
-
-
-    Future<void> _fetchDebts() async {
-      setState(() => _isLoading = true);
-
-      final userId = _auth.currentUser?.uid;
-      if (userId == null) {
-        setState(() => _isLoading = false);
-        return;
-      }
-
-      try {
-        final transactions = await _firestore.collection('transactions').get();
-        Map<String, double> debts = {};
-
-        for (var doc in transactions.docs) {
-          final data = doc.data();
-          String paidBy = data['paidBy'];
-          Map<String, dynamic> participantShares = data['participantShares'] ?? {};
-
-          if (paidBy != userId && participantShares.containsKey(userId)) {
-            double amountOwed = (participantShares[userId] as num).toDouble();
-
-            if (debts.containsKey(paidBy)) {
-              debts[paidBy] = debts[paidBy]! + amountOwed;
-            } else {
-              debts[paidBy] = amountOwed;
-            }
-          }
-        }
-
-        setState(() {
-          _debts = debts.entries
-              .map((entry) => {
-            'id': entry.key,
-            'name': entry.key, // PaidBy contains the name of the person
-            'amount': entry.value
-          })
-              .toList();
-          _isLoading = false;
-        });
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading debts: $e')),
-        );
-        setState(() => _isLoading = false);
-      }
-    }
-
-    void _navigateToPaymentHistory() {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const PaymentHistoryPage()),
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to record payment: $e')),
       );
     }
+  }
 
-    @override
-    Widget build(BuildContext context) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text("Settle Up"),
-          backgroundColor: Colors.teal,
-          elevation: 0,
-          centerTitle: true,
-        ),
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Colors.teal))
-            : _debts.isEmpty
-            ? _buildEmptyState()
-            : _buildDebtsList(),
+  void _navigateToPaymentHistory() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const PaymentHistoryPage()),
+    );
+  }
 
-        // Floating Action Button for Payment History at Bottom Right
-        floatingActionButton: FloatingActionButton.extended(
-          onPressed: _navigateToPaymentHistory,
-          icon: const Icon(Icons.history),
-          label: const Text("Payment History"),
-          backgroundColor: Colors.teal,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Settle Up"),
+        backgroundColor: Colors.teal,
+        elevation: 0,
+        centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchDebts,
           ),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // Bottom Right
-      );
-    }
+        ],
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+          : _debts.isEmpty
+          ? _buildEmptyState()
+          : _buildDebtsList(),
 
-    Widget _buildEmptyState() {
+      // Floating Action Button for Payment History at Bottom Right
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _navigateToPaymentHistory,
+        icon: const Icon(Icons.history),
+        label: const Text("Payment History"),
+        backgroundColor: Colors.teal,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat, // Bottom Right
+    );
+  }
+
+
+Widget _buildEmptyState() {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -303,4 +326,5 @@
         ),
       );
     }
+
   }

@@ -26,6 +26,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   List<String> _groupMembers = [];
   bool isLoading = true;
   String? _groupId;
+  bool _isSettled = false;
   Map<String, double> _participantShares = {};
 
   final List<String> _categories = ["Others", "Shopping", "Utility", "Food", "Grocery"];
@@ -268,6 +269,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                         _selectedDate,
                         _participantShares,
                         _selectedCategory,
+                        _isSettled,
                       );
 
                       ScaffoldMessenger.of(context).showSnackBar(

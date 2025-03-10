@@ -32,37 +32,34 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
     }
 
     try {
-      // Query transactions where `isSettlement` is true
+      // Query transactions from `settled_transactions`
       final transactions = await _firestore
-          .collection('transactions')
-          .where('isSettlement', isEqualTo: true)
+          .collection('settled_transactions')
           .get();
 
       List<Map<String, dynamic>> payments = [];
 
       for (var doc in transactions.docs) {
         final data = doc.data();
-        final paidBy = data['paidBy']; // The person who made the payment
-        final participantShares = data['participantShares'] as Map<String, dynamic>;
-        final amount = data['amount'];
-        final date = (data['date'] as Timestamp).toDate();
 
-        // Get the recipient from `participantShares`
-        final recipient = participantShares.keys.first; // Assuming only one recipient
+        final String debtClearedBy = data['debtClearedBy'] ?? 'Unknown';
+        final String paidTo = data['paidTo'] ?? 'Unknown';
+        final String description = data['description'] ?? 'Debt Settled';
+        final double amount = (data['amount'] as num?)?.toDouble() ?? 0.0;
+        final DateTime date = (data['date'] as Timestamp?)?.toDate() ?? DateTime.now();
 
-        // Check if the logged-in user was involved
-        if (paidBy == userId || recipient == userId) {
-          final bool userPaid = paidBy == userId;
-          final String otherPerson = userPaid ? recipient : paidBy; // Get the other person's ID
+        // Determine if the current user paid or received payment
+        final bool userPaid = debtClearedBy == 'You' || debtClearedBy == userId;
 
-          payments.add({
-            'id': doc.id,
-            'amount': amount,
-            'date': date,
-            'userPaid': userPaid,
-            'otherPerson': otherPerson,
-          });
-        }
+        payments.add({
+          'id': doc.id,
+          'amount': amount,
+          'date': date,
+          'debtClearedBy': debtClearedBy,
+          'paidTo': paidTo,
+          'description': description,
+          'userPaid': userPaid,
+        });
       }
 
       setState(() {
@@ -76,7 +73,6 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
       setState(() => _isLoading = false);
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -162,6 +158,7 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
               final bool userPaid = payment['userPaid'];
               final DateTime date = payment['date'];
               final String formattedDate = DateFormat('MMM d, yyyy • h:mm a').format(date);
+              final String otherParty = userPaid ? payment['paidTo'] : payment['debtClearedBy'];
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -202,8 +199,8 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
                                 const SizedBox(height: 4),
                                 Text(
                                   userPaid
-                                      ? "You paid ${payment['otherPerson']}"
-                                      : "${payment['otherPerson']} paid you",
+                                      ? "You paid $otherParty"
+                                      : "$otherParty paid you",
                                   style: TextStyle(
                                     fontSize: 14,
                                     color: Colors.grey[600],
@@ -270,9 +267,11 @@ class _PaymentHistoryPageState extends State<PaymentHistoryPage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            _detailRow("Description", payment['description']),
             _detailRow("Type", payment['userPaid'] ? "Payment Sent" : "Payment Received"),
             _detailRow("Amount", "\$${payment['amount'].toStringAsFixed(2)}"),
-            _detailRow(payment['userPaid'] ? "Paid To" : "Paid By", payment['otherPerson']),
+            _detailRow("Debt Cleared By", payment['debtClearedBy']),
+            _detailRow("Paid To", payment['paidTo']),
             _detailRow("Date", DateFormat('MMMM d, yyyy').format(payment['date'])),
             _detailRow("Time", DateFormat('h:mm a').format(payment['date'])),
             _detailRow("Transaction ID", payment['id']),

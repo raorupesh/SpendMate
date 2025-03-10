@@ -10,6 +10,7 @@ class Transaction {
   DateTime date;
   Map<String, double> participantShares;
   String category;
+  bool isSettled;
 
   Transaction({
     required this.id,
@@ -20,6 +21,7 @@ class Transaction {
     required this.date,
     required this.participantShares,
     required this.category,
+    required this.isSettled,
   });
 
   Map<String, dynamic> toMap() {
@@ -31,6 +33,7 @@ class Transaction {
       'date': Timestamp.fromDate(date),
       'participantShares': participantShares,
       'category': category,
+      'isSettled': isSettled,
     };
   }
 
@@ -45,6 +48,7 @@ class Transaction {
       date: (data['date'] as Timestamp).toDate(),
       participantShares: Map<String, double>.from(data['participantShares']),
       category: data['category'] ?? "Others",
+      isSettled: false,
     );
   }
 }
@@ -76,6 +80,7 @@ class TransactionProvider with ChangeNotifier {
       DateTime date,
       Map<String, double> participantShares,
       String category,
+      bool isSettled,
       ) async {
     try {
       await _firestore.collection('transactions').add({
@@ -86,6 +91,7 @@ class TransactionProvider with ChangeNotifier {
         'date': Timestamp.fromDate(date),
         'participantShares': participantShares,
         'category': category,
+        'isSettled': isSettled,
       });
       notifyListeners();
     } catch (e) {

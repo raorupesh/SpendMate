@@ -33,26 +33,30 @@ class _HomePageState extends State<HomePage> {
     double iOweSum = 0.0;
 
     // Fetch all transactions
-    final transactions = await _firestore.collection('transactions').get();
+    final transactions = await _firestore.collection('transactions')
+        .where('isSettled', isEqualTo: false)
+        .get();
+
 
     for (var doc in transactions.docs) {
       final data = doc.data();
       String paidBy = data['paidBy'];
       Map<String, dynamic> participantShares = data['participantShares'] ?? {};
 
-      if (paidBy == 'You')
-      {
+      if (paidBy == 'You') {
         // People Owe Me: Sum of participant shares when I paid
         participantShares.forEach((key, value) {
-          if(key != 'You') {
+          if (key != 'You') {
             owingsSum += (value as num).toDouble();
           }
         });
       }
-      else
-      {
-        // I Owe: Sum of transactions where I am in participant shares
-        iOweSum += (participantShares['You'] as num).toDouble();
+      else if (paidBy != 'You') {
+        participantShares.forEach((key, value) {
+          if (key == 'You') {
+            iOweSum += (participantShares['You'] as num).toDouble();
+          }
+        });
       }
     }
 
