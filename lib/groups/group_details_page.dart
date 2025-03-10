@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/groups/group_settings_page.dart';
+import 'package:spendmate/providers/group_provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:spendmate/transactions/transaction_details_page.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:spendmate/transactions/add_transaction_page.dart';
-
+import 'package:spendmate/transactions/transaction_details_page.dart';
 
 class GroupDetailPage extends StatefulWidget {
   final String groupName;
@@ -16,65 +17,82 @@ class GroupDetailPage extends StatefulWidget {
 }
 
 class _GroupDetailPageState extends State<GroupDetailPage> {
-  late List<String> groupMembers;
+  String? groupId;
+  List<String> _groupMembers = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // We need to use Provider.of<GroupProvider>(context, listen: false) in initState
-    final group = Provider.of<GroupProvider>(context, listen: false)
-        .getGroup(widget.groupName);
-    groupMembers = group.members;
+    _fetchGroupDetails();
+  }
+
+  /// Fetches group details from Firestore
+  Future<void> _fetchGroupDetails() async {
+    final group = await Provider.of<GroupProvider>(context, listen: false)
+        .getGroupByName(widget.groupName);
+
+    if (group != null) {
+      setState(() {
+        groupId = group.id;
+        _groupMembers = List<String>.from(group.members);
+        isLoading = false;
+      });
+
+      // Fetch transactions only if groupId is available
+      if (groupId != null) {
+        Provider.of<TransactionProvider>(context, listen: false)
+            .fetchTransactions(groupId!);
+      }
+    } else {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Group not found!")),
+      );
+      Navigator.pop(context);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final groupProvider = Provider.of<GroupProvider>(context);
-    final group = groupProvider.getGroup(widget.groupName);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(group.name),
+        title: Text(widget.groupName),
         backgroundColor: Colors.teal,
         elevation: 2,
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
             onPressed: () async {
-              // Navigate to Group Settings Page
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => GroupSettingsPage(
-                    groupId: group.id, // Pass group ID
-                    groupName: widget.groupName,
-                    groupMembers: groupMembers,
-                    onLeaveGroup: (groupId) {
-                      // Handle group leaving in provider
-                      groupProvider.leaveGroup(groupId);
-                    },
-                  ),
-                ),
-              );
+              if (groupId != null) {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => GroupSettingsPage(
+                      groupId: groupId!,
+                      groupName: widget.groupName,
+                      groupMembers: _groupMembers,
+                      onLeaveGroup: (id) async {
+                        await Provider.of<GroupProvider>(context, listen: false)
+                            .leaveGroup(id, "YourUserName");
 
-              // Handle the result
-              if (result != null) {
-                if (result['action'] == 'leave') {
-                  // If user left the group, navigate back to groups list
-                  Navigator.of(context).pop();
-                } else if (result['action'] == 'update' && result['members'] != null) {
-                  // If members were updated
-                  setState(() {
-                    groupMembers = List<String>.from(result['members']);
-                    group.members = List<String>.from(result['members']); // Update the group members
-                  });
+                        Navigator.pop(context);
+                      },
+                    ),
+                  ),
+                );
+
+                if (result != null && result['action'] == 'leave') {
+                  Navigator.pop(context);
                 }
               }
             },
           ),
         ],
       ),
-      body: Column(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+          : Column(
         children: [
           // Group summary card
           Card(
@@ -88,30 +106,12 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Members: ${group.members.length}",
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        "Transactions: ${group.transactions.length}",
+                        "Members: ${_groupMembers.length}",
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
                   ),
                   const Spacer(),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        "Total: \$${_calculateTotal(group.transactions).toStringAsFixed(2)}",
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.teal,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -141,131 +141,108 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
             ),
           ),
 
-          // Transactions list
           Expanded(
-            child: group.transactions.isEmpty
-                ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade300),
-                  const SizedBox(height: 16),
-                  const Text(
-                    "No transactions yet",
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  TextButton.icon(
-                    icon: const Icon(Icons.add_circle_outline),
-                    label: const Text("Add your first transaction"),
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              AddTransactionPage(groupName: widget.groupName),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+            child: groupId == null
+                ? const Center(
+              child: Text(
+                "Group not found!",
+                style: TextStyle(fontSize: 16, color: Colors.grey),
               ),
             )
-                : ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: group.transactions.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final transaction = group.transactions[index];
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 4),
-                  elevation: 1,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.teal.shade50,
-                      child: Icon(
-                        Icons.receipt,
-                        color: Colors.teal.shade700,
-                      ),
-                    ),
-                    title: Text(
-                      transaction.description,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(
-                      "Paid by: ${transaction.paidBy}",
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    trailing: Column(
+                : StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('transactions')
+                  .where('groupId', isEqualTo: groupId)
+                  .snapshots(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                  return Center(
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
-                        Text(
-                          "\$${transaction.amount.toStringAsFixed(2)}",
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        Text(
-                          _formatDate(transaction.date),
-                          style: const TextStyle(
-                            fontSize: 12,
+                        Icon(Icons.receipt_long, size: 64, color: Colors.grey.shade300),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "No transactions yet",
+                          style: TextStyle(
+                            fontSize: 18,
                             color: Colors.grey,
                           ),
                         ),
                       ],
                     ),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => TransactionDetailsPage(
-                            groupName: group.name,
-                            transactionIndex: index,
+                  );
+                }
+
+                return ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: snapshot.data!.docs.length,
+                  separatorBuilder: (context, index) => const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    var transaction = snapshot.data!.docs[index];
+
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 4),
+                      elevation: 1,
+                      child: ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: Colors.teal.shade50,
+                          child: Icon(
+                            Icons.receipt,
+                            color: Colors.teal.shade700,
                           ),
                         ),
-                      );
-                    },
-                  ),
+                        title: Text(
+                          transaction['description'],
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          "Paid by: ${transaction['paidBy']}",
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                        trailing: Text(
+                          "\$${transaction['amount'].toStringAsFixed(2)}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TransactionDetailsPage(
+                                transactionId: transaction.id, // Pass Firestore transaction ID
+                                groupId: groupId!, // Ensure correct groupId is passed
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
                 );
               },
             ),
           ),
         ],
       ),
-      // Floating Action Button to Add Transactions
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: Colors.teal,
+
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) =>
-                  AddTransactionPage(groupName: widget.groupName),
-            ),
-          );
+          if (groupId != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => AddTransactionPage(groupName: widget.groupName),
+              ),
+            );
+          }
         },
-        icon: const Icon(Icons.add),
-        label: const Text("Add Expense"),
+        backgroundColor: Colors.teal,
+        elevation: 2,
+        child: const Icon(Icons.add),
       ),
     );
-  }
-
-  // Helper method to calculate total amount
-  double _calculateTotal(List<Transaction> transactions) {
-    double total = 0;
-    for (var transaction in transactions) {
-      total += transaction.amount;
-    }
-    return total;
-  }
-
-  // Helper method to format date
-  String _formatDate(DateTime date) {
-    return "${date.day}/${date.month}/${date.year}";
   }
 }

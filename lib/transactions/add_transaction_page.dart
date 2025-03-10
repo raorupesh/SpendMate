@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:spendmate/providers/group_provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/transactions/split_method_page.dart';
 
 class AddTransactionPage extends StatefulWidget {
   final String groupName;
 
-  const AddTransactionPage({Key? key, required this.groupName}) : super(key: key);
+  const AddTransactionPage({super.key, required this.groupName});
 
   @override
   _AddTransactionPageState createState() => _AddTransactionPageState();
@@ -21,23 +22,39 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
   String _paidBy = '';
   String _splitMethod = 'Equal';
   String _splitValues = '';
-  late List<String> _groupMembers;
+  String _selectedCategory = 'Others'; // Default category
+  List<String> _groupMembers = [];
+  bool isLoading = true;
+  String? _groupId;
   Map<String, double> _participantShares = {};
+
+  final List<String> _categories = ["Others", "Shopping", "Utility", "Food", "Grocery"];
 
   @override
   void initState() {
     super.initState();
-    // Get group members from provider
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _groupMembers = Provider.of<GroupProvider>(context, listen: false)
-          .getGroup(widget.groupName)
-          .members;
-      if (_groupMembers.isNotEmpty) {
-        setState(() {
-          _paidBy = _groupMembers[0];
-        });
-      }
-    });
+    _fetchGroupData();
+  }
+
+  /// Fetches group data from Firestore
+  Future<void> _fetchGroupData() async {
+    final group = await Provider.of<GroupProvider>(context, listen: false)
+        .getGroupByName(widget.groupName);
+
+    if (group != null) {
+      setState(() {
+        _groupMembers = ['You', ...group.members]; // Always include "You"
+        _paidBy = _groupMembers.first; // Default selection is "You"
+        _groupId = group.id;
+        isLoading = false;
+      });
+    } else {
+      setState(() => isLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Group not found!")),
+      );
+      Navigator.pop(context);
+    }
   }
 
   @override
@@ -61,85 +78,49 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
     }
   }
 
-  // Calculate participant shares based on split method
+  /// Calculate participant shares based on split method
   void _calculateShares() {
     final double totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    final int memberCount = _groupMembers.length;
 
-    // Reset shares
     _participantShares = {};
 
     switch (_splitMethod) {
       case 'Equal':
-      // Split equally among all members
-        final double sharePerPerson = totalAmount / _groupMembers.length;
+        final double sharePerPerson = totalAmount / memberCount;
         for (var member in _groupMembers) {
           _participantShares[member] = sharePerPerson;
         }
         break;
 
       case 'Custom':
-      // Process custom split values
         if (_splitValues.isNotEmpty) {
           final values = _splitValues.split(',');
           if (values.length == _groupMembers.length) {
-            double total = 0.0;
-
-            // First pass: calculate total of provided values
+            double total = values.map((v) => double.tryParse(v.trim()) ?? 0).reduce((a, b) => a + b);
             for (int i = 0; i < values.length; i++) {
-              final double? value = double.tryParse(values[i].trim());
-              if (value != null) {
-                total += value;
-              }
-            }
-
-            // Second pass: calculate proportions of total amount
-            if (total > 0) {
-              for (int i = 0; i < values.length; i++) {
-                final double? value = double.tryParse(values[i].trim());
-                if (value != null) {
-                  _participantShares[_groupMembers[i]] = (value / total) * totalAmount;
-                } else {
-                  _participantShares[_groupMembers[i]] = 0.0;
-                }
-              }
+              double? value = double.tryParse(values[i].trim());
+              _participantShares[_groupMembers[i]] = (value ?? 0) / total * totalAmount;
             }
           }
         }
         break;
 
       case 'Percentage':
-      // Process percentage split
         if (_splitValues.isNotEmpty) {
           final percentages = _splitValues.split(',');
           if (percentages.length == _groupMembers.length) {
-            double totalPercentage = 0.0;
-
-            // First pass: calculate total percentage
+            double totalPercentage = percentages.map((p) => double.tryParse(p.trim()) ?? 0).reduce((a, b) => a + b);
             for (int i = 0; i < percentages.length; i++) {
-              final double? percentage = double.tryParse(percentages[i].trim());
-              if (percentage != null) {
-                totalPercentage += percentage;
-              }
-            }
-
-            // Second pass: calculate amounts based on percentages
-            if (totalPercentage > 0) {
-              for (int i = 0; i < percentages.length; i++) {
-                final double? percentage = double.tryParse(percentages[i].trim());
-                if (percentage != null) {
-                  _participantShares[_groupMembers[i]] = (percentage / 100.0) * totalAmount;
-                } else {
-                  _participantShares[_groupMembers[i]] = 0.0;
-                }
-              }
+              double? percentage = double.tryParse(percentages[i].trim());
+              _participantShares[_groupMembers[i]] = (percentage ?? 0) / 100.0 * totalAmount;
             }
           }
         }
         break;
 
       default:
-      // Default to equal split
-        final double sharePerPerson = totalAmount / _groupMembers.length;
+        final double sharePerPerson = totalAmount / memberCount;
         for (var member in _groupMembers) {
           _participantShares[member] = sharePerPerson;
         }
@@ -148,23 +129,20 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
   @override
   Widget build(BuildContext context) {
-    final groupProvider = Provider.of<GroupProvider>(context);
-    final group = groupProvider.getGroup(widget.groupName);
-    _groupMembers = group.members;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('Add Expense'),
         backgroundColor: Colors.teal,
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator(color: Colors.teal))
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Description
               TextFormField(
                 controller: _descriptionController,
                 decoration: const InputDecoration(
@@ -172,16 +150,11 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.description),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a description';
-                  }
-                  return null;
-                },
+                validator: (value) =>
+                value == null || value.isEmpty ? 'Please enter a description' : null,
               ),
               const SizedBox(height: 16),
 
-              // Amount
               TextFormField(
                 controller: _amountController,
                 decoration: const InputDecoration(
@@ -191,18 +164,13 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an amount';
-                  }
-                  if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
-                  }
+                  if (value == null || value.isEmpty) return 'Please enter an amount';
+                  if (double.tryParse(value) == null) return 'Please enter a valid number';
                   return null;
                 },
               ),
               const SizedBox(height: 16),
 
-              // Date Picker
               InkWell(
                 onTap: () => _selectDate(context),
                 child: InputDecorator(
@@ -211,44 +179,32 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.calendar_today),
                   ),
-                  child: Text(
-                    DateFormat('MMM dd, yyyy').format(_selectedDate),
-                  ),
+                  child: Text(DateFormat('MMM dd, yyyy').format(_selectedDate)),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Paid By Dropdown
+              // Category Dropdown
               DropdownButtonFormField<String>(
-                value: _paidBy.isEmpty && _groupMembers.isNotEmpty ? _groupMembers[0] : _paidBy,
+                value: _selectedCategory,
                 decoration: const InputDecoration(
-                  labelText: 'Paid By',
+                  labelText: 'Category',
                   border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.person),
+                  prefixIcon: Icon(Icons.category),
                 ),
-                items: _groupMembers.map((String member) {
+                items: _categories.map((String category) {
                   return DropdownMenuItem<String>(
-                    value: member,
-                    child: Text(member),
+                    value: category,
+                    child: Text(category),
                   );
                 }).toList(),
                 onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _paidBy = newValue;
-                    });
-                  }
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select who paid';
-                  }
-                  return null;
+                  if (newValue != null) setState(() => _selectedCategory = newValue);
                 },
               ),
               const SizedBox(height: 16),
 
-              // Split Method
+              // Split Method Button (Box Format)
               InkWell(
                 onTap: () async {
                   final result = await Navigator.push(
@@ -272,75 +228,42 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.splitscreen),
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(_splitMethod),
-                      const Icon(Icons.arrow_forward_ios, size: 16),
-                    ],
-                  ),
+                  child: Text(_splitMethod),
                 ),
               ),
               const SizedBox(height: 16),
 
-              // Split details if not equal
-              if (_splitMethod != 'Equal' && _splitValues.isNotEmpty)
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Split Details (${_splitMethod}):',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(_splitValues),
-                      ],
-                    ),
-                  ),
-                ),
-              const SizedBox(height: 24),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.teal),
+            onPressed: () async {
+              if (_formKey.currentState!.validate()) {
+                _calculateShares();
 
-              // Save Button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.teal,
-                  ),
-                  onPressed: () {
-                    if (_formKey.currentState!.validate()) {
-                      // Calculate shares based on split method
-                      _calculateShares();
+                if (_groupId != null) {
+                  await Provider.of<TransactionProvider>(context, listen: false).addTransaction(
+                    _groupId!,
+                    _descriptionController.text,
+                    double.parse(_amountController.text),
+                    _paidBy,
+                    _selectedDate,
+                    _participantShares,
+                    _selectedCategory,
+                  );
 
-                      // Create new transaction
-                      final newTransaction = Transaction(
-                        description: _descriptionController.text,
-                        amount: double.parse(_amountController.text),
-                        date: _selectedDate,
-                        paidBy: _paidBy,
-                        participantShares: _participantShares,
-                      );
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Transaction saved successfully!")),
+                  );
 
-                      // Add transaction to group
-                      groupProvider.addTransactionByGroupName(
-                        widget.groupName,
-                        newTransaction,
-                      );
-
-                      // Navigate back
-                      Navigator.pop(context);
-                    }
-                  },
-                  child: const Text(
-                    'Save Transaction',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
+                  Navigator.pop(context);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Error: Group ID not found!")),
+                  );
+                }
+              }
+            },
+            child: const Text('Save Transaction', style: TextStyle(fontSize: 16)),
+          ),
             ],
           ),
         ),

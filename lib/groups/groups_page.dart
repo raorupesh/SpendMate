@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
 import 'package:spendmate/groups/group_details_page.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
+import 'package:spendmate/providers/group_provider.dart';
 
 class GroupsPage extends StatefulWidget {
   const GroupsPage({super.key});
@@ -145,14 +146,13 @@ class _GroupsPageState extends State<GroupsPage> {
                       onPressed: (selectedFriends.isEmpty ||
                           groupNameController.text.isEmpty)
                           ? null
-                          : () {
-                        Provider.of<GroupProvider>(context, listen: false)
+                          : () async {
+                        await Provider.of<GroupProvider>(context, listen: false)
                             .addGroup(
-                          Group(
-                            name: groupNameController.text,
-                            members: selectedFriends,
-                          ),
+                          groupNameController.text.trim(),
+                          selectedFriends,
                         );
+
                         Navigator.pop(context);
                       },
                       style: ElevatedButton.styleFrom(
@@ -201,35 +201,25 @@ class _GroupsPageState extends State<GroupsPage> {
         iconTheme: const IconThemeData(color: Colors.white),
         automaticallyImplyLeading: false,
       ),
-      body: Consumer<GroupProvider>(
-        builder: (context, groupProvider, child) {
-          if (groupProvider.groups.isEmpty) {
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance.collection('groups').snapshots(),
+        builder: (context, snapshot) {
+          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    Icons.group_off,
-                    size: 80,
-                    color: Colors.grey[400],
-                  ),
+                  Icon(Icons.group_off, size: 80, color: Colors.grey[400]),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     "No groups yet",
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey[700],
+                      color: Colors.grey,
                     ),
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    "Create a group to start tracking expenses",
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
                   ElevatedButton.icon(
                     onPressed: _showCreateGroupDialog,
                     icon: const Icon(Icons.add),
@@ -237,13 +227,6 @@ class _GroupsPageState extends State<GroupsPage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.teal,
                       foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
                     ),
                   ),
                 ],
@@ -253,144 +236,32 @@ class _GroupsPageState extends State<GroupsPage> {
 
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: groupProvider.groups.length,
+            itemCount: snapshot.data!.docs.length,
             itemBuilder: (context, index) {
-              final group = groupProvider.groups[index];
-              return Container(
+              var groupData = snapshot.data!.docs[index];
+              String groupId = groupData.id;
+              String groupName = groupData['name'];
+              List<dynamic> members = groupData['members'];
+
+              return Card(
                 margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(16),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.teal[50],
+                    child: Text(groupName.substring(0, 1).toUpperCase(),
+                        style: const TextStyle(color: Colors.teal)),
+                  ),
+                  title: Text(groupName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text("${members.length} members"),
+                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => GroupDetailPage(
-                          groupName: group.name,
-                        ),
+                        builder: (context) => GroupDetailPage(groupName: groupName),
                       ),
                     );
                   },
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              backgroundColor: Colors.teal[50],
-                              child: Text(
-                                group.name.substring(0, 1).toUpperCase(),
-                                style: const TextStyle(
-                                  color: Colors.teal,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    group.name,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  Text(
-                                    "${group.members.length} members",
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward_ios,
-                              size: 16,
-                              color: Colors.grey[400],
-                            ),
-                          ],
-                        ),
-                        if (group.transactions.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Divider(color: Colors.grey[200]),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                "Balance",
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 6,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: group.balance < 0
-                                      ? Colors.red[50]
-                                      : Colors.green[50],
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Text(
-                                  group.balance < 0
-                                      ? "You owe \$${group.balance.abs().toStringAsFixed(2)}"
-                                      : "You are owed \$${group.balance.toStringAsFixed(2)}",
-                                  style: TextStyle(
-                                    color: group.balance < 0
-                                        ? Colors.red
-                                        : Colors.green[700],
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            "${group.transactions.length} transactions",
-                            style: TextStyle(
-                              color: Colors.grey[500],
-                              fontSize: 12,
-                            ),
-                          ),
-                        ] else
-                          const SizedBox(
-                            height: 12,
-                            child: Padding(
-                              padding: EdgeInsets.only(top: 8),
-                              child: Text(
-                                "No transactions yet",
-                                style: TextStyle(
-                                  color: Colors.grey,
-                                  fontStyle: FontStyle.italic,
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
                 ),
               );
             },

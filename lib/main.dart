@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/providers/chores_provider.dart';
+import 'package:spendmate/providers/group_provider.dart';
 import 'package:spendmate/providers/transaction_provider.dart';
 import 'package:spendmate/firebase_options.dart'; // Generated file
 import 'package:spendmate/screens/splash_screen.dart';
@@ -32,6 +33,7 @@ class SpendMateApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (context) => GroupProvider()),
+        ChangeNotifierProvider(create: (context) => TransactionProvider()),
         ChangeNotifierProvider(create: (context) => ChoreProvider()),
         Provider<AuthService>(create: (context) => AuthService()), // Provide AuthService
       ],

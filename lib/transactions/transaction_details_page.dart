@@ -1,93 +1,135 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:spendmate/providers/transaction_provider.dart';
-import 'package:intl/intl.dart'; // Import intl for date formatting
+import 'package:intl/intl.dart';
+import 'package:spendmate/providers/group_provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class TransactionDetailsPage extends StatelessWidget {
-  final String groupName;
-  final int transactionIndex;
+class TransactionDetailsPage extends StatefulWidget {
+  final String transactionId;
+  final String groupId;
 
-  const TransactionDetailsPage({
-    super.key,
-    required this.groupName,
-    required this.transactionIndex,
-  });
+  const TransactionDetailsPage({super.key, required this.transactionId, required this.groupId});
+
+  @override
+  _TransactionDetailsPageState createState() => _TransactionDetailsPageState();
+}
+
+class _TransactionDetailsPageState extends State<TransactionDetailsPage> {
+  late Map<String, double> _participantShares = {};
+  double _amount = 0.0;
+  String _splitMethod = "Equal";
+  List<String> _groupMembers = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchGroupMembers();
+  }
+
+  /// Fetch group members from Firestore
+  Future<void> _fetchGroupMembers() async {
+    var groupDoc = await FirebaseFirestore.instance.collection('groups').doc(widget.groupId).get();
+    if (groupDoc.exists) {
+      setState(() {
+        _groupMembers = List<String>.from(groupDoc['members']);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final group = Provider.of<GroupProvider>(context).getGroup(groupName);
-    final transaction = group.transactions[transactionIndex];
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance.collection('transactions').doc(widget.transactionId).snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData || snapshot.data == null || !snapshot.data!.exists) {
+          return Scaffold(
+            appBar: AppBar(title: const Text("Transaction Details")),
+            body: const Center(child: Text("Transaction not found")),
+          );
+        }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Transaction Details"),
-        backgroundColor: Colors.teal,
-        elevation: 2, // Add subtle shadow
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              _showDeleteConfirmationDialog(context);
-            },
+        var transactionData = snapshot.data!.data() as Map<String, dynamic>;
+
+        _amount = transactionData['amount'];
+        _participantShares = Map<String, double>.from(transactionData['participantShares']);
+        _splitMethod = transactionData['splitMethod'] ?? "Equal";
+
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text("Transaction Details"),
+            backgroundColor: Colors.teal,
+            elevation: 2,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.delete),
+                onPressed: () {
+                  _showDeleteConfirmationDialog(context);
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () {
+                  _showEditParticipantsDialog(context);
+                },
+              ),
+            ],
           ),
-        ],
-      ),
-      body: SingleChildScrollView( // Make the body scrollable
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Card( // Wrap content in a Card for a cleaner look
-            elevation: 4,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildDetailRow("Description:", transaction.description),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    "Amount:",
-                    "\$${transaction.amount.toStringAsFixed(2)}",
-                    valueColor: transaction.amount < 0 ? Colors.red : Colors.green,
-                  ),
-                  const SizedBox(height: 12),
-                  _buildDetailRow(
-                    "Date:",
-                    DateFormat('EEEE, MMMM d, y').format(transaction.date.toLocal()), // Format date
-                  ),
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 10),
-                  const Text("Participants & Contributions:",
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 8),
-                  transaction.participantShares.isNotEmpty
-                      ? ListView.separated( // Use ListView.separated for better list rendering
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(), // Disable scrolling within the ListView
-                    itemCount: transaction.participantShares.length,
-                    separatorBuilder: (context, index) => const Divider(),
-                    itemBuilder: (context, index) {
-                      final entry = transaction.participantShares.entries.elementAt(index);
-                      return ListTile(
-                        leading: const Icon(Icons.person),
-                        title: Text(entry.key),
-                        trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
-                      );
-                    },
-                  )
-                      : const Text(
-                    "No participants added.",
-                    style: TextStyle(fontSize: 16, color: Colors.grey),
-                  ),
-                ],
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildDetailRow("Description:", transactionData['description']),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(
+                      "Amount:",
+                      "\$${_amount.toStringAsFixed(2)}",
+                      valueColor: _amount < 0 ? Colors.red : Colors.green,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildDetailRow(
+                      "Date:",
+                      DateFormat('EEEE, MMMM d, y').format((transactionData['date'] as Timestamp).toDate()),
+                    ),
+                    const SizedBox(height: 20),
+                    const Divider(),
+                    const SizedBox(height: 10),
+                    const Text("Participants & Contributions:",
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    _participantShares.isNotEmpty
+                        ? ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _participantShares.length,
+                      separatorBuilder: (context, index) => const Divider(),
+                      itemBuilder: (context, index) {
+                        var entry = _participantShares.entries.elementAt(index);
+                        return ListTile(
+                          leading: const Icon(Icons.person),
+                          title: Text(entry.key),
+                          trailing: Text("\$${entry.value.toStringAsFixed(2)}"),
+                        );
+                      },
+                    )
+                        : const Text(
+                      "No participants added.",
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -117,9 +159,9 @@ class TransactionDetailsPage extends StatelessWidget {
               child: const Text("Cancel"),
             ),
             TextButton(
-              onPressed: () {
-                Provider.of<GroupProvider>(context, listen: false)
-                    .deleteTransaction(groupName, transactionIndex);
+              onPressed: () async {
+                await Provider.of<GroupProvider>(context, listen: false)
+                    .deleteTransaction(widget.transactionId);
                 Navigator.pop(context);
                 Navigator.pop(context);
               },
@@ -129,5 +171,63 @@ class TransactionDetailsPage extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _showEditParticipantsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: const Text("Edit Participants"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: _groupMembers.map((participant) => CheckboxListTile(
+                  title: Text(participant),
+                  value: _participantShares.containsKey(participant),
+                  onChanged: (bool? checked) {
+                    setState(() {
+                      if (checked == true) {
+                        _participantShares[participant] = 0.0; // Default share
+                      } else {
+                        _participantShares.remove(participant);
+                      }
+                    });
+                  },
+                )).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                TextButton(
+                  onPressed: () async {
+                    _recalculateSplit();
+                    await FirebaseFirestore.instance
+                        .collection('transactions')
+                        .doc(widget.transactionId)
+                        .update({'participantShares': _participantShares});
+                    Navigator.pop(context);
+                  },
+                  child: const Text("Save"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _recalculateSplit() {
+    double totalAmount = _amount;
+    int memberCount = _participantShares.length;
+
+    if (_splitMethod == "Equal" && memberCount > 0) {
+      double sharePerPerson = totalAmount / memberCount;
+      _participantShares.updateAll((key, value) => sharePerPerson);
+    }
   }
 }

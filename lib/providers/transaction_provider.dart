@@ -1,192 +1,105 @@
 import 'package:flutter/material.dart';
-import 'package:uuid/uuid.dart'; // Make sure to add this dependency
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Transaction {
   String id;
+  String groupId;
   String description;
   double amount;
+  String paidBy;
   DateTime date;
-  String paidBy; // Added to track who paid
-  Map<String, double> participantShares; // Stores split amounts per participant
+  Map<String, double> participantShares;
+  String category;
 
   Transaction({
-    String? id,
+    required this.id,
+    required this.groupId,
     required this.description,
     required this.amount,
+    required this.paidBy,
     required this.date,
     required this.participantShares,
-    required this.paidBy,
-  }) : id = id ?? const Uuid().v4();
-}
+    required this.category,
+  });
 
-class Group {
-  String id;
-  String name;
-  List<String> members;
-  List<Transaction> transactions;
-  DateTime createdAt;
-
-  Group({
-    String? id,
-    required this.name,
-    required this.members,
-    List<Transaction>? transactions,
-    DateTime? createdAt,
-  }) :
-        id = id ?? const Uuid().v4(),
-        transactions = transactions ?? [],
-        createdAt = createdAt ?? DateTime.now();
-
-  // Calculate total balance
-  double get balance {
-    double total = 0.0;
-    for (var transaction in transactions) {
-      total += transaction.amount;
-    }
-    return total;
+  Map<String, dynamic> toMap() {
+    return {
+      'groupId': groupId,
+      'description': description,
+      'amount': amount,
+      'paidBy': paidBy,
+      'date': Timestamp.fromDate(date),
+      'participantShares': participantShares,
+      'category': category,
+    };
   }
 
-  // Calculate individual balances per member
-  Map<String, double> get memberBalances {
-    final balances = <String, double>{};
-
-    // Initialize balances for all members
-    for (var member in members) {
-      balances[member] = 0.0;
-    }
-
-    // Calculate based on transactions
-    for (var transaction in transactions) {
-      // Add what each person paid
-      if (balances.containsKey(transaction.paidBy)) {
-        balances[transaction.paidBy] = (balances[transaction.paidBy] ?? 0) + transaction.amount;
-      }
-
-      // Subtract what each person owes
-      for (var entry in transaction.participantShares.entries) {
-        if (balances.containsKey(entry.key)) {
-          balances[entry.key] = (balances[entry.key] ?? 0) - entry.value;
-        }
-      }
-    }
-
-    return balances;
+  factory Transaction.fromMap(DocumentSnapshot doc) {
+    var data = doc.data() as Map<String, dynamic>;
+    return Transaction(
+      id: doc.id,
+      groupId: data['groupId'],
+      description: data['description'],
+      amount: data['amount'],
+      paidBy: data['paidBy'],
+      date: (data['date'] as Timestamp).toDate(),
+      participantShares: Map<String, double>.from(data['participantShares']),
+      category: data['category'] ?? "Others",
+    );
   }
 }
 
-class GroupProvider with ChangeNotifier {
-  List<Group> _groups = [];
+class TransactionProvider with ChangeNotifier {
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  List<Transaction> _transactions = [];
 
-  List<Group> get groups => _groups;
+  List<Transaction> get transactions => _transactions;
 
-  // Add a new group
-  void addGroup(Group group) {
-    _groups.add(group);
-    notifyListeners();
+  /// Fetch transactions for a specific group in real-time
+  void fetchTransactions(String groupId) {
+    _firestore
+        .collection('transactions')
+        .where('groupId', isEqualTo: groupId)
+        .snapshots()
+        .listen((snapshot) {
+      _transactions = snapshot.docs.map((doc) => Transaction.fromMap(doc)).toList();
+      notifyListeners();
+    });
   }
 
-  // Get a group by ID
-  Group? getGroupById(String id) {
+  /// Add a transaction with category support
+  Future<void> addTransaction(
+      String groupId,
+      String description,
+      double amount,
+      String paidBy,
+      DateTime date,
+      Map<String, double> participantShares,
+      String category,
+      ) async {
     try {
-      return _groups.firstWhere((group) => group.id == id);
+      await _firestore.collection('transactions').add({
+        'groupId': groupId,
+        'description': description,
+        'amount': amount,
+        'paidBy': paidBy,
+        'date': Timestamp.fromDate(date),
+        'participantShares': participantShares,
+        'category': category,
+      });
+      notifyListeners();
     } catch (e) {
-      return null;
+      debugPrint('Error adding transaction: $e');
     }
   }
 
-  // Get a group by name
-  Group getGroup(String groupName) {
-    return _groups.firstWhere((group) => group.name == groupName);
-  }
-
-  // Update group members
-  void updateGroupMembers(String groupId, List<String> updatedMembers) {
-    final group = _groups.firstWhere((group) => group.id == groupId);
-    group.members = updatedMembers;
-    notifyListeners();
-  }
-
-  // Leave or delete a group by ID
-  void leaveGroup(String groupId) {
-    _groups.removeWhere((group) => group.id == groupId);
-    notifyListeners();
-  }
-
-  // Legacy method - leave group by name (for backward compatibility)
-  void leaveGroupByName(String groupName) {
-    _groups.removeWhere((group) => group.name == groupName);
-    notifyListeners();
-  }
-
-  // Settle up all debts in a group
-  void settleUpGroup(String groupId) {
-    Group? group = getGroupById(groupId);
-    if (group != null) {
-      group.transactions.clear(); // Clear all transactions
-      notifyListeners(); // Update UI
-    }
-  }
-
-  // Legacy method - settle up by name (for backward compatibility)
-  void settleUpGroupByName(String groupName) {
-    Group group = _groups.firstWhere((group) => group.name == groupName);
-    group.transactions.clear(); // Clear all transactions
-    notifyListeners(); // Update UI
-  }
-
-  // Add a transaction to a group
-  void addTransaction(String groupId, Transaction transaction) {
-    // Find the group by ID
-    Group? group = getGroupById(groupId);
-    if (group != null) {
-      // Add the transaction to the group's transaction list
-      group.transactions.add(transaction);
-      // Notify listeners to rebuild UI
+  /// Delete a transaction
+  Future<void> deleteTransaction(String transactionId) async {
+    try {
+      await _firestore.collection('transactions').doc(transactionId).delete();
       notifyListeners();
+    } catch (e) {
+      debugPrint('Error deleting transaction: $e');
     }
-  }
-
-  // Legacy method - add transaction by group name (for backward compatibility)
-  void addTransactionByGroupName(String groupName, Transaction transaction) {
-    // Find the group by name
-    Group group = _groups.firstWhere((group) => group.name == groupName);
-    // Add the transaction to the group's transaction list
-    group.transactions.add(transaction);
-    // Notify listeners to rebuild UI
-    notifyListeners();
-  }
-
-  // Update a transaction at the specific index
-  void updateTransaction(
-      String groupId, int transactionIndex, Transaction updatedTransaction) {
-    final group = getGroupById(groupId);
-    if (group != null && transactionIndex < group.transactions.length) {
-      group.transactions[transactionIndex] = updatedTransaction;
-      notifyListeners();
-    }
-  }
-
-  // Legacy method - update transaction by group name (for backward compatibility)
-  void updateTransactionByGroupName(
-      String groupName, int transactionIndex, Transaction updatedTransaction) {
-    final group = _groups.firstWhere((group) => group.name == groupName);
-    group.transactions[transactionIndex] = updatedTransaction;
-    notifyListeners();
-  }
-
-  // Delete a transaction from a group
-  void deleteTransaction(String groupId, int transactionIndex) {
-    Group? group = getGroupById(groupId);
-    if (group != null && transactionIndex < group.transactions.length) {
-      group.transactions.removeAt(transactionIndex);
-      notifyListeners();
-    }
-  }
-
-  // Legacy method - delete transaction by group name (for backward compatibility)
-  void deleteTransactionByGroupName(String groupName, int transactionIndex) {
-    Group group = _groups.firstWhere((group) => group.name == groupName);
-    group.transactions.removeAt(transactionIndex);
-    notifyListeners();
   }
 }

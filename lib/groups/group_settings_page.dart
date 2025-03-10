@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
+import 'package:spendmate/providers/group_provider.dart';
 
 class GroupSettingsPage extends StatefulWidget {
-  final String groupId; // Added group ID for database operations
+  final String groupId;
   final String groupName;
   final List<String> groupMembers;
-  final Function(String) onLeaveGroup; // Callback to handle group leaving
+  final Function(String) onLeaveGroup;
 
   const GroupSettingsPage({
     super.key,
@@ -60,17 +62,11 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
                         children: [
                           const Text(
                             "Group Name",
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey,
-                            ),
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
                           ),
                           Text(
                             widget.groupName,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                           ),
                         ],
                       ),
@@ -111,7 +107,7 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
 
             const SizedBox(height: 20),
 
-            // Buttons Section
+// Modify Members Button
             Row(
               children: [
                 Expanded(
@@ -135,11 +131,16 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
                           ),
                         ),
                       );
+
                       if (updatedMembers != null) {
                         setState(() {
                           groupMembers = updatedMembers;
                         });
-                        Navigator.pop(context, {'members': updatedMembers, 'action': 'update'});
+
+                        await Provider.of<GroupProvider>(context, listen: false)
+                            .updateGroupMembers(widget.groupId, updatedMembers);
+
+                        Navigator.popUntil(context, ModalRoute.withName('/'));
                       }
                     },
                   ),
@@ -147,8 +148,11 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
               ],
             ),
 
+
+
             const SizedBox(height: 16),
 
+            // Leave Group Button
             ElevatedButton.icon(
               icon: const Icon(Icons.exit_to_app),
               label: const Text("Leave Group"),
@@ -160,8 +164,15 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: () {
-                _showLeaveGroupDialog(context);
+              onPressed: () async {
+                bool confirm = await _confirmLeaveGroup(context);
+                if (confirm) {
+                  await Provider.of<GroupProvider>(context, listen: false)
+                      .leaveGroup(widget.groupId, "YourUserName");
+
+                  // Redirect to Groups Page after leaving the group
+                  Navigator.popUntil(context, ModalRoute.withName('/'));
+                }
               },
             ),
           ],
@@ -170,35 +181,16 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
     );
   }
 
-  void _showLeaveGroupDialog(BuildContext context) {
-    showDialog(
+  Future<bool> _confirmLeaveGroup(BuildContext context) async {
+    return await showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (BuildContext context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          title: Row(
-            children: [
-              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-              const SizedBox(width: 10),
-              const Text("Leave Group"),
-            ],
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Are you sure you want to leave \"${widget.groupName}\"?"),
-              const SizedBox(height: 12),
-              const Text(
-                "You will no longer have access to this group's expenses.",
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-              ),
-            ],
-          ),
+          title: const Text("Leave Group"),
+          content: const Text("Are you sure you want to leave this group?"),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(context, false),
               child: const Text("Cancel"),
             ),
             ElevatedButton(
@@ -206,24 +198,13 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
                 backgroundColor: Colors.redAccent,
                 foregroundColor: Colors.white,
               ),
-              onPressed: () async {
-                setState(() {
-                  isLoading = true;
-                });
-
-                Navigator.pop(context); // Close dialog
-
-                // Call the callback function to handle group leaving
-                widget.onLeaveGroup(widget.groupId);
-
-                // Return to groups list with leave action
-                Navigator.pop(context, {'action': 'leave', 'groupId': widget.groupId});
-              },
-              child: const Text("Leave Group"),
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("Leave"),
             ),
           ],
         );
       },
-    );
+    ) ??
+        false;
   }
 }
