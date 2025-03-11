@@ -103,7 +103,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   );
                 },
                 child: const Text(
-                  "Smart Expense Tracking",
+                  "Smarter Expense and Chore Tracking",
                   style: TextStyle(
                     fontSize: 18,
                     color: Colors.white70,

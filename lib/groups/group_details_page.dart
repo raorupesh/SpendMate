@@ -74,7 +74,7 @@ class _GroupDetailPageState extends State<GroupDetailPage> {
                       groupMembers: _groupMembers,
                       onLeaveGroup: (id) async {
                         await Provider.of<GroupProvider>(context, listen: false)
-                            .leaveGroup(id, "YourUserName");
+                            .leaveGroup(id,"YourUserName");
 
                         Navigator.pop(context);
                       },

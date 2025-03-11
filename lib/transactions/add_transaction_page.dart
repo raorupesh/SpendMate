@@ -44,7 +44,7 @@ class _AddTransactionPageState extends State<AddTransactionPage> {
 
     if (group != null) {
       setState(() {
-        _groupMembers = ['You', ...group.members]; // Always include "You"
+        _groupMembers = group.members;
         _paidBy = _groupMembers.first; // Default selection is "You"
         _groupId = group.id;
         isLoading = false;

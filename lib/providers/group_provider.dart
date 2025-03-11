@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
@@ -68,33 +69,30 @@ class GroupProvider with ChangeNotifier {
     }
   }
 
-  Future<void> leaveGroup(String groupId, String userName) async {
-    try {
-      DocumentReference groupRef = _firestore.collection('groups').doc(groupId);
-      DocumentSnapshot groupDoc = await groupRef.get();
+  Future<void> leaveGroup(String groupId, String userId) async {
+    final groupRef = FirebaseFirestore.instance.collection('groups').doc(groupId);
 
-      if (groupDoc.exists) {
-        List<dynamic> members = groupDoc['members'];
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final groupSnapshot = await transaction.get(groupRef);
+      if (!groupSnapshot.exists) return;
 
-        // Remove the user from the group
-        if (members.contains(userName)) {
-          members.remove(userName);
+      List<dynamic> members = groupSnapshot.data()?['members'] ?? [];
 
-          if (members.isEmpty) {
-            // If no members left, delete the group
-            await groupRef.delete();
-          } else {
-            // Otherwise, update the group
-            await groupRef.update({'members': members});
-          }
-
-          notifyListeners();
-        }
+      if (members.contains("You")) {
+        members.remove("You"); // Remove "You" if stored as a string
       }
-    } catch (e) {
-      debugPrint('Error leaving group: $e');
-    }
+      if (members.contains(userId)) {
+        members.remove(userId); // Remove by actual Firebase User ID if needed
+      }
+
+      if (members.isEmpty) {
+        transaction.delete(groupRef); // Delete the group if no members remain
+      } else {
+        transaction.update(groupRef, {'members': members});
+      }
+    });
   }
+
 
   Future<void> updateGroupMembers(String groupId, List<String> updatedMembers) async {
     try {
@@ -127,17 +125,19 @@ class GroupProvider with ChangeNotifier {
     }
   }
   /// Add a new group
-  Future<void> addGroup(String groupName, List<String> members) async {
+  Future<void> addGroup(String groupName, List<String> members,String createdBy) async {
+    final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     try {
-      String groupId = const Uuid().v4();
-      await _firestore.collection('groups').doc(groupId).set({
-        'id': groupId,
+      await _firestore.collection('groups').add({
         'name': groupName,
-        'members': members,
+        'members': members, // Add user ID to members list
+        'createdBy': createdBy, // Store the user who created the group
         'createdAt': FieldValue.serverTimestamp(),
       });
+
+      notifyListeners();
     } catch (e) {
-      debugPrint('Error adding group: $e');
+      print("Error creating group: $e");
     }
   }
 

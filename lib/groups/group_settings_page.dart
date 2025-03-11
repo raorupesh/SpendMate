@@ -1,6 +1,8 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:spendmate/groups/add_group_members_page.dart';
+import 'package:spendmate/groups/groups_page.dart';
 import 'package:spendmate/providers/group_provider.dart';
 
 class GroupSettingsPage extends StatefulWidget {
@@ -164,16 +166,47 @@ class _GroupSettingsPageState extends State<GroupSettingsPage> {
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
-              onPressed: () async {
-                bool confirm = await _confirmLeaveGroup(context);
-                if (confirm) {
-                  await Provider.of<GroupProvider>(context, listen: false)
-                      .leaveGroup(widget.groupId, "YourUserName");
+                onPressed: () async {
+                  bool confirm = await _confirmLeaveGroup(context);
+                  if (confirm) {
+                    setState(() {
+                      isLoading = true;
+                    });
 
-                  // Redirect to Groups Page after leaving the group
-                  Navigator.popUntil(context, ModalRoute.withName('/'));
+                    try {
+                      String userId = FirebaseAuth.instance.currentUser?.uid ?? "You";
+
+                      await Provider.of<GroupProvider>(context, listen: false)
+                          .leaveGroup(widget.groupId, userId);
+                      // Call the provided onLeaveGroup callback function
+                      widget.onLeaveGroup(widget.groupId);
+
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("You have left the group")),
+                      );
+
+                      // Navigate back to Groups Page and remove the current screen
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (context) => const GroupsPage()),
+                            (route) => false, // Remove all previous routes
+                      );
+                    } catch (e) {
+                      // Show error message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error leaving group: $e")),
+                      );
+                    } finally {
+                      if (mounted) {
+                        setState(() {
+                          isLoading = false;
+                        });
+                      }
+                    }
+                  }
                 }
-              },
+
             ),
           ],
         ),

@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -13,10 +14,13 @@ class GroupsPage extends StatefulWidget {
 }
 
 class _GroupsPageState extends State<GroupsPage> {
+
   void _showCreateGroupDialog() {
+
     TextEditingController groupNameController = TextEditingController();
     List<String> selectedFriends = [];
 
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? "";
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -70,15 +74,19 @@ class _GroupsPageState extends State<GroupsPage> {
                     onChanged: (_) => setState(() {}),
                   ),
                   const SizedBox(height: 20),
+
+                  // Add members button
                   ElevatedButton.icon(
                     onPressed: () async {
                       final friends = await Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) => AddGroupMembersPage(
-                              preselectedFriends: selectedFriends),
+                            preselectedFriends: selectedFriends,
+                          ),
                         ),
                       );
+
                       if (friends != null) {
                         setState(() {
                           selectedFriends = List<String>.from(friends);
@@ -101,6 +109,8 @@ class _GroupsPageState extends State<GroupsPage> {
                     ),
                   ),
                   const SizedBox(height: 16),
+
+                  // Show selected members
                   if (selectedFriends.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -140,6 +150,8 @@ class _GroupsPageState extends State<GroupsPage> {
                       ),
                     ),
                   const SizedBox(height: 24),
+
+                  // Create Group Button
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -151,6 +163,7 @@ class _GroupsPageState extends State<GroupsPage> {
                             .addGroup(
                           groupNameController.text.trim(),
                           selectedFriends,
+                          userId,
                         );
 
                         Navigator.pop(context);
@@ -183,8 +196,13 @@ class _GroupsPageState extends State<GroupsPage> {
     );
   }
 
+
+
+
+
   @override
   Widget build(BuildContext context) {
+    String userId = FirebaseAuth.instance.currentUser?.uid ?? "";
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -202,8 +220,16 @@ class _GroupsPageState extends State<GroupsPage> {
         automaticallyImplyLeading: false,
       ),
       body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('groups').snapshots(),
-        builder: (context, snapshot) {
+
+      stream: FirebaseFirestore.instance
+          .collection('groups')
+          .where(Filter.and(
+          Filter("members", arrayContains: 'You'), // If the user is in members
+          Filter("createdBy", isEqualTo: userId)    // OR if the user created the group
+      ))
+          .snapshots(),
+
+      builder: (context, snapshot) {
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
             return Center(
               child: Column(
