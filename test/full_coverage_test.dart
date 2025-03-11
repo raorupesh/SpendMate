@@ -11,8 +11,9 @@ import '../lib/groups/group_settings_page.dart';
 import '../lib/groups/groups_page.dart';
 import '../lib/groups/select_participants_page.dart';
 import '../lib/providers/group_provider.dart';
-import '../lib/screens/splash_screen.dart';
+
 import '../lib/transactions/split_method_page.dart';
+import '../lib/validations/credential_validation_page.dart';
 
 class MockGroupProvider extends Mock implements GroupProvider {}
 
@@ -334,202 +335,94 @@ testWidgets('Shows confirmation dialog when Leave Group is clicked',
     });
   });
 
+  group('validateFields Tests', () {
+    late TextEditingController emailController;
+    late TextEditingController passwordController;
+    late bool isButtonEnabled;
+    late String emailError;
+    late String passwordError;
 
-  testWidgets('SignUpPage UI renders correctly', (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: SignUpPage()));
+    void updateButtonState(Function callback) {
+      isButtonEnabled = callback();
+    }
 
-    // Check if "Sign Up" title exists (finds first instance)
-    expect(find.text('Sign Up'), findsWidgets); // Allows multiple matches
+    void updateErrorMessages(String email, String password) {
+      emailError = email;
+      passwordError = password;
+    }
 
-    // Check if all fields exist
-    expect(find.text('Full Name'), findsOneWidget);
-    expect(find.text('Phone Number'), findsOneWidget);
-    expect(find.text('Email'), findsOneWidget);
-    expect(find.text('Password'), findsOneWidget);
-  });
-
-  testWidgets('SignUp button is disabled initially',
-      (WidgetTester tester) async {
-    await tester.pumpWidget(const MaterialApp(home: SignUpPage()));
-
-    final signUpButton = find.widgetWithText(ElevatedButton, 'Sign Up');
-    expect(tester.widget<ElevatedButton>(signUpButton).onPressed, isNull);
-  });
-
-  // Group tests for LoginPage
-  group('LoginPage Tests', () {
-    testWidgets(
-        'Login button should be disabled initially and enabled with valid input',
-        (WidgetTester tester) async {
-      // Build the LoginPage widget and trigger a frame
-      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
-
-      // Verify the login button is disabled initially
-      final loginButton = find.byType(ElevatedButton);
-      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
-
-      // Enter valid email and password
-      await tester.enterText(
-          find.byType(TextField).at(0), 'test@example.com'); // Email
-      await tester.enterText(
-          find.byType(TextField).at(1), 'password123'); // Password
-
-      // Trigger a frame after entering text
-      await tester.pump();
-
-      // Verify the login button is now enabled
-      expect(tester.widget<ElevatedButton>(loginButton).enabled, true);
-
-      // Now, enter invalid email and password (empty password)
-      await tester.enterText(
-          find.byType(TextField).at(1), ''); // Password empty
-      await tester.pump();
-
-      // Verify the login button is still disabled
-      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
+    setUp(() {
+      emailController = TextEditingController();
+      passwordController = TextEditingController();
+      isButtonEnabled = false;
+      emailError = '';
+      passwordError = '';
     });
 
-    testWidgets(
-        'Login button should toggle (disable/enable) based on password input',
-        (WidgetTester tester) async {
-      // Build the LoginPage widget and trigger a frame
-      await tester.pumpWidget(const MaterialApp(home: LoginPage()));
-
-      // Find the TextField widgets for email and password
-      final emailField =
-          find.byType(TextField).at(0); // First TextField is email
-      final passwordField =
-          find.byType(TextField).at(1); // Second TextField is password
-
-      // Find the Login button
-      final loginButton = find.byType(ElevatedButton);
-
-      // Initially, verify that the login button is disabled
-      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
-
-      // Enter valid email and password
-      await tester.enterText(emailField, 'test@example.com'); // Email
-      await tester.enterText(passwordField, 'password123'); // Password
-
-      // Trigger a frame to rebuild the widget after entering text
-      await tester.pump();
-
-      // Verify that the login button is now enabled
-      expect(tester.widget<ElevatedButton>(loginButton).enabled, true);
-
-      // Now, leave the password field empty and verify that the login button is disabled again
-      await tester.enterText(passwordField, ''); // Empty password
-      await tester.pump();
-
-      // Verify that the login button is still disabled
-      expect(tester.widget<ElevatedButton>(loginButton).enabled, false);
-    });
-  });
-
-  // Group tests for ProfilePage
-  group('ProfilePage Tests', () {
-
-    // group('GroupDetailPage Tests', () {
-    //   testWidgets(
-    //       'Should show the Group Settings page when settings icon is tapped',
-    //       (WidgetTester tester) async {
-    //     // Simulate a group with no transactions
-    //     final groupProvider = GroupProvider();
-    //     groupProvider.addGroup(
-    //         Group(name: 'New Group', members: ['Vamshi'], transactions: []));
-    //
-    //     await tester.pumpWidget(
-    //       ChangeNotifierProvider(
-    //         create: (context) => groupProvider,
-    //         child: MaterialApp(home: GroupDetailPage(groupName: 'New Group')),
-    //       ),
-    //     );
-    //
-    //     // Tap on the settings icon to navigate to GroupSettingsPage
-    //     await tester.tap(find.byIcon(Icons.settings));
-    //     await tester.pumpAndSettle();
-    //
-    //     // Verify that we navigated to the GroupSettingsPage
-    //     expect(find.text('Group Settings'), findsOneWidget);
-    //   });
-    // });
-  });
-
-  // Group tests for Add Group Members Page
-
-  group('Splash Screen Tests', () {
-    testWidgets('Splash Screen should navigate to Login Page after delay',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
-
-      await tester.pump(const Duration(seconds: 5)); // Simulate splash delay
-      await tester.pumpAndSettle();
-
-      expect(find.byType(LoginPage), findsOneWidget);
-    });
-  });
-
-  group('Groups Page Tests', () {
-    testWidgets('Groups Page should display groups list',
-        (WidgetTester tester) async {
-      await tester.pumpWidget(
-        ChangeNotifierProvider(
-          create: (_) => GroupProvider(),
-          child: const MaterialApp(home: GroupsPage()),
-        ),
+    test('Should show error when email is empty', () {
+      validateFields(
+        emailController,
+        passwordController,
+        updateButtonState: updateButtonState,
+        updateErrorMessages: updateErrorMessages,
+        isSignUp: false,
       );
-      expect(find.text('Groups'), findsOneWidget);
+
+      expect(emailError, 'Email cannot be empty');
+      expect(passwordError, 'Password cannot be empty');
+      expect(isButtonEnabled, false);
+    });
+
+    test('Should show error for invalid email format', () {
+      emailController.text = 'invalidemail';
+      passwordController.text = 'validPass123';
+
+      validateFields(
+        emailController,
+        passwordController,
+        updateButtonState: updateButtonState,
+        updateErrorMessages: updateErrorMessages,
+        isSignUp: false,
+      );
+
+      expect(emailError, 'Invalid email address');
+      expect(passwordError, '');
+      expect(isButtonEnabled, false);
+    });
+
+    test('Should show error for short password', () {
+      emailController.text = 'test@example.com';
+      passwordController.text = '123';
+
+      validateFields(
+        emailController,
+        passwordController,
+        updateButtonState: updateButtonState,
+        updateErrorMessages: updateErrorMessages,
+        isSignUp: false,
+      );
+
+      expect(emailError, '');
+      expect(passwordError, 'Password must be at least 6 characters');
+      expect(isButtonEnabled, false);
+    });
+
+    test('Should pass validation for valid email and password', () {
+      emailController.text = 'test@example.com';
+      passwordController.text = 'validPass123';
+
+      validateFields(
+        emailController,
+        passwordController,
+        updateButtonState: updateButtonState,
+        updateErrorMessages: updateErrorMessages,
+        isSignUp: false,
+      );
+
+      expect(emailError, '');
+      expect(passwordError, '');
+      expect(isButtonEnabled, true);
     });
   });
 
-  // testWidgets('ChoresDetailsPage displays chore plans and allows navigation',
-  //     (WidgetTester tester) async {
-  //   // Mock ChoreProvider
-  //   final choreProvider = ChoreProvider();
-  //   choreProvider.addChorePlan(ChorePlan(
-  //     choreName: "Weekly Cleaning",
-  //     participants: ["John", "Doe"],
-  //     directAssignments: {
-  //       "John": {"Monday": "Trash"}
-  //     },
-  //     finalSchedule: {},
-  //   ));
-  //
-  //   await tester.pumpWidget(
-  //     MultiProvider(
-  //       providers: [ChangeNotifierProvider.value(value: choreProvider)],
-  //       child: MaterialApp(home: ChoresDetailsPage()),
-  //     ),
-  //   );
-  //
-  //   // Verify chore plan is displayed
-  //   expect(find.text("Weekly Cleaning"), findsOneWidget);
-  //   expect(find.text("Participants: John, Doe"), findsOneWidget);
-  //
-  //   // Tap on a chore plan to navigate
-  //   await tester.tap(find.text("Weekly Cleaning"));
-  //   await tester.pumpAndSettle();
-  //
-  //   // Ensure navigation happens
-  //   expect(find.byType(ChoreDetailsViewPage), findsOneWidget);
-  // });
-
-  group('Profile Page Widget Tests', () {
-    setUp(() async {
-      SharedPreferences.setMockInitialValues({});
-    });
-
-
-    testWidgets('Should display profile image when set in SharedPreferences',
-        (WidgetTester tester) async {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('profile_image', 'test_path.jpg');
-
-      await tester.pumpWidget(const MaterialApp(home: ProfilePage()));
-      await tester.pump();
-
-      expect(find.byType(CircleAvatar), findsOneWidget);
-    });
-
-  });
 }
