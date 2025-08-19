@@ -49,6 +49,3 @@ With features like **expense categorization**, **bill reminders**, and **conditi
 - 📅 Calendar sync for recurring bills and reminders  
 
 ---
-
-
----
